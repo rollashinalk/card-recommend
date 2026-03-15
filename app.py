@@ -14,8 +14,6 @@ class CardPromo:
     enabled: bool
     start_date: dt.date
     end_date: dt.date
-    country: str
-    channel: str
     min_amount: float
     min_currency: str
     discount_percent: float
@@ -47,25 +45,21 @@ def convert(amount: float, from_currency: str, to_currency: str, usd_jpy: float)
     raise ValueError("Unsupported currency conversion")
 
 
-def evaluate(promo: CardPromo, pay_jpy: float, pay_date: dt.date, country: str, channel: str, usd_jpy: float) -> tuple[float, str]:
+def evaluate(promo: CardPromo, pay_jpy: int, pay_date: dt.date, usd_jpy: float) -> tuple[int, str]:
     if not promo.enabled:
-        return 0.0, "카드 비활성화"
+        return 0, "카드 비활성화"
     if not (promo.start_date <= pay_date <= promo.end_date):
-        return 0.0, "행사 기간 아님"
-    if promo.country.upper() != country.upper():
-        return 0.0, "국가 조건 불일치"
-    if promo.channel != "both" and promo.channel != channel:
-        return 0.0, "결제 방식 조건 불일치"
+        return 0, "행사 기간 아님"
     if promo.used_count >= promo.max_uses:
-        return 0.0, "사용 횟수 소진"
+        return 0, "사용 횟수 소진"
 
-    pay_in_min_currency = convert(pay_jpy, "JPY", promo.min_currency, usd_jpy)
+    pay_in_min_currency = convert(float(pay_jpy), "JPY", promo.min_currency, usd_jpy)
     if pay_in_min_currency < promo.min_amount:
-        return 0.0, f"최소 결제 금액 미달 ({promo.min_amount:g} {promo.min_currency})"
+        return 0, f"최소 결제 금액 미달 ({promo.min_amount:g} {promo.min_currency})"
 
     raw_discount_jpy = pay_jpy * (promo.discount_percent / 100.0)
     max_discount_jpy = convert(promo.max_discount, promo.max_currency, "JPY", usd_jpy)
-    discount_jpy = min(raw_discount_jpy, max_discount_jpy)
+    discount_jpy = int(round(min(raw_discount_jpy, max_discount_jpy)))
     reason = (
         f"할인율 {promo.discount_percent:g}% 적용, "
         f"건당 최대 {promo.max_discount:g} {promo.max_currency}"
@@ -80,8 +74,6 @@ def seed_promotions() -> List[CardPromo]:
             enabled=True,
             start_date=dt.date(2026, 2, 14),
             end_date=dt.date(2026, 5, 13),
-            country="JP",
-            channel="offline",
             min_amount=10000,
             min_currency="JPY",
             discount_percent=15,
@@ -95,8 +87,6 @@ def seed_promotions() -> List[CardPromo]:
             enabled=True,
             start_date=dt.date(2026, 2, 11),
             end_date=dt.date(2026, 4, 30),
-            country="JP",
-            channel="offline",
             min_amount=50,
             min_currency="USD",
             discount_percent=20,
@@ -109,7 +99,7 @@ def seed_promotions() -> List[CardPromo]:
 
 
 st.title("💳 일본 결제 카드 추천")
-st.caption("JPY 결제 금액을 입력하면, 카드 행사 조건을 비교해 가장 이득인 카드를 보여줍니다.")
+st.caption("JPY 결제 금액(정수)을 입력하면, 카드 행사 조건을 비교해 가장 이득인 카드를 보여줍니다.")
 
 if "promos" not in st.session_state:
     st.session_state.promos = seed_promotions()
@@ -132,14 +122,14 @@ with st.container(border=True):
 
 with st.container(border=True):
     st.subheader("결제 정보")
-    pay_jpy = st.number_input("결제 금액 (JPY)", min_value=0.0, step=1000.0, value=12000.0)
+    pay_jpy = st.number_input(
+        "결제 금액 (JPY)", min_value=0, step=1000, value=12000, format="%d"
+    )
     pay_date = st.date_input("결제 날짜", value=dt.date.today())
-    country = st.selectbox("국가", ["JP"], index=0)
-    channel = st.selectbox("결제 방식", ["offline", "online"], index=0)
 
 with st.container(border=True):
     st.subheader("카드/행사 목록")
-    st.caption("행사 조건은 필요 시 수정해서 사용하세요.")
+    st.caption("필요한 행사 항목만 간단히 수정할 수 있습니다.")
 
     rows = []
     for p in st.session_state.promos:
@@ -149,8 +139,6 @@ with st.container(border=True):
                 "enabled": p.enabled,
                 "start_date": p.start_date,
                 "end_date": p.end_date,
-                "country": p.country,
-                "channel": p.channel,
                 "min_amount": p.min_amount,
                 "min_currency": p.min_currency,
                 "discount_percent": p.discount_percent,
@@ -166,8 +154,6 @@ with st.container(border=True):
         num_rows="dynamic",
         use_container_width=True,
         column_config={
-            "country": st.column_config.SelectboxColumn(options=["JP", "CN", "VN"]),
-            "channel": st.column_config.SelectboxColumn(options=["offline", "online", "both"]),
             "min_currency": st.column_config.SelectboxColumn(options=["JPY", "USD"]),
             "max_currency": st.column_config.SelectboxColumn(options=["JPY", "USD"]),
         },
@@ -182,8 +168,6 @@ with st.container(border=True):
                     enabled=bool(row["enabled"]),
                     start_date=row["start_date"],
                     end_date=row["end_date"],
-                    country=str(row["country"]),
-                    channel=str(row["channel"]),
                     min_amount=float(row["min_amount"]),
                     min_currency=str(row["min_currency"]),
                     discount_percent=float(row["discount_percent"]),
@@ -210,13 +194,11 @@ if calc:
         for promo in st.session_state.promos:
             discount_jpy, reason = evaluate(
                 promo=promo,
-                pay_jpy=pay_jpy,
+                pay_jpy=int(pay_jpy),
                 pay_date=pay_date,
-                country=country,
-                channel=channel,
                 usd_jpy=usd_jpy,
             )
-            discount_usd = convert(discount_jpy, "JPY", "USD", usd_jpy)
+            discount_usd = convert(float(discount_jpy), "JPY", "USD", usd_jpy)
             results.append(
                 {
                     "card_name": promo.card_name,
