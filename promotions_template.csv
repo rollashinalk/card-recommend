@@ -1,7 +1,7 @@
-card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,used_count,total_cap_amount,total_cap_currency,total_used_amount,monthly_cashback_cap_amount,monthly_cashback_cap_currency,monthly_eligible_spend_cap_amount,monthly_eligible_spend_cap_currency,monthly_used_cashback_amount,monthly_used_eligible_spend_amount,monthly_aggregate_year_month,merchant_type,formula_id,formula_params_json
-KB UPI (가온 체크),true,percent_discount,2026-02-14,2026-05-13,10000,JPY,15,0,2000,JPY,5,0,,,0,0,JPY,0,JPY,0,0,,all,,
-하나 UPI (트래블로그),true,percent_discount,2026-02-11,2026-04-30,50,USD,20,0,10,USD,3,0,,,0,0,JPY,0,JPY,0,0,,all,,
-우리 UPI (SKT우리),true,percent_discount,2025-12-22,2026-05-31,50,USD,11,0,15,USD,3,0,,,0,0,JPY,0,JPY,0,0,,all,,
-BC GOAT,true,cashback_with_cap,,,0,USD,6,0,,USD,,0,30000,KRW,0,10000,KRW,200000,KRW,3000,70000,2026-03,all,,
-KB 일본 편의점 행사 (KB 트래블러스),true,fixed_cashback,2026-03-01,2026-03-31,1000,JPY,0,500,,JPY,10,0,5000,JPY,0,0,JPY,0,JPY,0,0,,kb_cvs3,,
-신한 더모아,true,formula_cashback,,,0,KRW,0,0,,KRW,,0,,,0,0,KRW,0,KRW,0,0,,all,shinhan_the_more_v1,
+card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,total_cap_amount,total_cap_currency,monthly_cashback_cap_amount,monthly_cashback_cap_currency,monthly_eligible_spend_cap_amount,monthly_eligible_spend_cap_currency,monthly_used_cashback_amount,monthly_used_eligible_spend_amount,monthly_aggregate_year_month,merchant_type,formula_id,formula_params_json
+KB UPI (가온 체크),true,percent_discount,2026-02-14,2026-05-13,10000,JPY,15,0,2000,JPY,5,0,JPY,0,JPY,0,JPY,0,0,,all,,
+하나 UPI (트래블로그),true,percent_discount,2026-02-11,2026-04-30,50,USD,20,0,10,USD,3,0,JPY,0,JPY,0,JPY,0,0,,all,,
+우리 UPI (SKT우리),true,percent_discount,2025-12-22,2026-05-31,50,USD,11,0,15,USD,3,0,JPY,0,JPY,0,JPY,0,0,,all,,
+BC GOAT,true,cashback_with_cap,,,0,USD,6,0,0,USD,0,30000,KRW,10000,KRW,200000,KRW,3000,70000,2026-03,all,,
+KB 일본 편의점 행사 (KB 트래블러스),true,fixed_cashback,2026-03-01,2026-03-31,1000,JPY,0,500,0,JPY,10,5000,JPY,0,JPY,0,JPY,0,0,,kb_cvs3,,
+신한 더모아,true,formula_cashback,,,0,KRW,0,0,0,KRW,0,0,KRW,0,KRW,0,KRW,0,0,,all,shinhan_the_more_v1,
