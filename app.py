@@ -334,7 +334,7 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
 
 
 st.title("💳 일본 결제 카드 추천")
-st.caption("JPY 결제 금액(정수)과 가맹점 유형을 선택하면, 카드 행사 조건을 비교해 추천합니다.")
+st.caption("JPY 결제 금액(정수)과 가맹점 버튼을 선택하면, 카드 행사 조건을 비교해 추천합니다.")
 
 if "promos" not in st.session_state:
     st.session_state.promos = seed_promotions()
@@ -355,17 +355,33 @@ with st.container(border=True):
     else:
         st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
+if "selected_merchant_type" not in st.session_state:
+    st.session_state.selected_merchant_type = MERCHANT_NORMAL
+
 with st.container(border=True):
     st.subheader("결제 정보")
+    st.write("가맹점 유형")
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button(
+            "일반",
+            use_container_width=True,
+            type="primary" if st.session_state.selected_merchant_type == MERCHANT_NORMAL else "secondary",
+        ):
+            st.session_state.selected_merchant_type = MERCHANT_NORMAL
+    with col_b:
+        if st.button(
+            "KB 3대 편의점(세븐, 로손, 패밀리)",
+            use_container_width=True,
+            type="primary" if st.session_state.selected_merchant_type == MERCHANT_KB_CVS3 else "secondary",
+        ):
+            st.session_state.selected_merchant_type = MERCHANT_KB_CVS3
+
+    merchant_type = st.session_state.selected_merchant_type
     pay_jpy = st.number_input(
         "결제 금액 (JPY)", min_value=0, step=1000, value=12000, format="%d"
     )
     pay_date = st.date_input("결제 날짜", value=dt.date.today())
-    merchant_type = st.selectbox(
-        "가맹점 유형",
-        [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
-        index=0,
-    )
 
 with st.container(border=True):
     st.subheader("카드/행사 목록")
