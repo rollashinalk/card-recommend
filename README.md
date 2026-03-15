@@ -21,15 +21,15 @@ Streamlit Community Cloud에 바로 배포할 수 있는 카드 추천 앱입니
 - 카드/행사 테이블 직접 수정 + CSV 업로드
 
 ## 프로모션 CSV 컬럼
-`card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,used_count,total_cap_amount,total_cap_currency,total_used_amount,monthly_cashback_cap_amount,monthly_cashback_cap_currency,monthly_eligible_spend_cap_amount,monthly_eligible_spend_cap_currency,monthly_used_cashback_amount,monthly_used_eligible_spend_amount,monthly_aggregate_year_month,merchant_type,formula_id,formula_params_json`
+`card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,total_cap_amount,total_cap_currency,monthly_cashback_cap_amount,monthly_cashback_cap_currency,monthly_eligible_spend_cap_amount,monthly_eligible_spend_cap_currency,merchant_type,formula_id,formula_params_json`
 
 ## 참고
 - `merchant_type=kb_cvs3`는 KB 편의점 그룹(세븐/로손/패밀리) 전용입니다.
 - `max_uses`가 비어있거나 0이면 횟수 제한 없음으로 처리됩니다.
+- `monthly_cashback_cap_amount`, `monthly_eligible_spend_cap_amount`가 비어있거나 0이면 각각 월 캐시백/월 적립대상 사용액 제한 없음으로 파싱됩니다.
 - BC GOAT처럼 KRW 한도형 규칙도 CSV로 입력 가능합니다.
 - 신한 더모아(`formula_cashback`)의 `shinhan_the_more_v1` 공식은 KRW 환산 결제금액 기준 `캐시백 = (amount % 1000) * 2`로 계산합니다. 예: 5,999원 → 1,998원.
 - `cashback_with_cap`은 건별 계산 후, 월 적립대상 사용액 잔여 한도 → 월 캐시백 잔여 한도 순으로 차감합니다.
-- `monthly_aggregate_year_month`가 결제월(`YYYY-MM`)과 다르면 월 누적 사용액은 0으로 간주합니다.
 
 ## 로컬 실행
 ```bash
