@@ -1,26 +1,21 @@
-# 일본 결제 카드 추천 (Streamlit)
+# 일본 결제 카드 추천 웹페이지
 
-Streamlit Community Cloud에 바로 배포할 수 있는 최소 카드 추천 앱입니다.
-
-## 포함 파일
-- `app.py`: 메인 Streamlit 앱
-- `requirements.txt`: 배포 의존성
+모바일에서 빠르게 결제 금액(JPY)을 넣고, 등록한 카드 행사 중 어떤 카드가 가장 할인 이득이 큰지 계산하는 단일 페이지 앱입니다.
 
 ## 기능
-- 실시간 USD/JPY 환율 조회
-- 결제 금액(JPY) 입력 후 카드별 행사 비교
-- USD 기준 / JPY 기준 행사 동시 계산
-- 모바일에서 보기 쉬운 단순 UI
-- 카드/행사 테이블 직접 수정 가능
+- 실시간 USD/JPY 환율 조회 (`open.er-api.com`)
+- JPY 입력 기준으로 USD 조건 행사까지 자동 비교
+- 카드 활성화/비활성화
+- 카드별 행사 수동 등록
+- 행사별 사용 횟수 관리
+- 추천 카드 순위 및 예상 할인 금액 표시
 
-## 로컬 실행
-```bash
-pip install -r requirements.txt
-streamlit run app.py
-```
+## 사용 방법
+1. `index.html`을 브라우저에서 엽니다.
+2. 환율이 로드되면 결제 금액(JPY), 날짜를 입력합니다.
+3. **최적 카드 계산**을 누릅니다.
+4. 필요하면 행사 관리 섹션에서 행사 규정을 추가/수정합니다.
 
-## Streamlit Community Cloud 배포
-1. GitHub 저장소 연결
-2. Main file path를 `app.py`로 설정
-3. Deploy
-
+## 참고
+- 수수료/실시간 카드사 승인환율은 반영하지 않고, 조회 시점의 기준 환율(USD/JPY)만 사용합니다.
+- 데이터는 브라우저 `localStorage`에 저장됩니다.
