@@ -1,7 +1,6 @@
 import csv
 import datetime as dt
 import io
-import json
 from dataclasses import dataclass
 from typing import List
 
@@ -88,21 +87,11 @@ def merchant_match(promo_merchant_type: str, selected_merchant_type: str) -> boo
     return False
 
 
-def calc_formula_cashback(pay_jpy: int, formula_id: str, formula_params_json: str) -> float:
+def calc_formula_cashback(pay_krw: int, formula_id: str, formula_params_json: str) -> float:
     if formula_id != "shinhan_the_more_v1":
         return 0.0
 
-    try:
-        params = json.loads(formula_params_json or "{}")
-    except Exception:
-        params = {}
-
-    unit = int(params.get("unit", 1000))
-    amount_per_unit = float(params.get("amount_per_unit", 100))
-    if unit <= 0:
-        return 0.0
-
-    return (pay_jpy // unit) * amount_per_unit
+    return float((pay_krw % 1000) * 2)
 
 
 def evaluate(
@@ -209,7 +198,9 @@ def evaluate(
             reason += f" · 월 캐시백 잔여 ¥{monthly_cashback_remaining:,.0f}"
 
     elif promo.reward_type == "formula_cashback":
-        reward_jpy = calc_formula_cashback(pay_jpy, promo.formula_id, promo.formula_params_json)
+        pay_krw = int(round(convert(float(pay_jpy), "JPY", "KRW", fx_rates)))
+        reward_krw = calc_formula_cashback(pay_krw, promo.formula_id, promo.formula_params_json)
+        reward_jpy = convert(reward_krw, "KRW", "JPY", fx_rates)
         reason = f"공식 캐시백 ({promo.formula_id})"
 
     else:
@@ -382,7 +373,7 @@ with st.container(border=True):
             "monthly_eligible_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "monthly_aggregate_year_month": st.column_config.TextColumn(help="YYYY-MM 형식. 비어있거나 결제월과 다르면 월 누적값을 0으로 처리"),
             "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
-            "formula_params_json": st.column_config.TextColumn(help='예: {"unit":1000,"amount_per_unit":100}'),
+            "formula_params_json": st.column_config.TextColumn(help="선택 입력(현재 shinhan_the_more_v1은 파라미터 미사용)"),
         },
     )
     st.session_state.promos = rows_to_promos(edited)
