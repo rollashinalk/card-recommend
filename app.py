@@ -44,12 +44,14 @@ class CardPromo:
 
 @dataclass
 class Transaction:
-    occurred_at: dt.datetime
+    txn_id: str
+    txn_date: dt.date
     card_name: str
     amount: float
     currency: str
     merchant_type: str
     status: str
+    note: str
 
 
 def parse_date(value: str) -> dt.date | None:
@@ -61,6 +63,13 @@ def parse_date(value: str) -> dt.date | None:
 
 def parse_bool(value: str) -> bool:
     return str(value).strip().lower() in {"true", "1", "yes", "y"}
+
+
+def normalize_status(value: str) -> str:
+    status = str(value or "").strip().lower()
+    if status == "cancelled":
+        return "cancelled"
+    return "approved"
 
 
 def get_fx_rates() -> dict[str, float] | None:
@@ -114,7 +123,7 @@ def recalc_promo_usage(
             continue
         if txn.card_name != promo.card_name:
             continue
-        txn_date = txn.occurred_at.date()
+        txn_date = txn.txn_date
         if promo.start_date and txn_date < promo.start_date:
             continue
         if promo.end_date and txn_date > promo.end_date:
@@ -272,8 +281,8 @@ def seed_promotions() -> List[CardPromo]:
 
 def seed_transactions() -> List[Transaction]:
     return [
-        Transaction(dt.datetime(2026, 3, 2, 12, 30), "KB UPI (가온 체크)", 12000, "JPY", "all", "approved"),
-        Transaction(dt.datetime(2026, 3, 5, 19, 20), "KB UPI (가온 체크)", 13000, "JPY", "all", "cancelled"),
+        Transaction("txn-001", dt.date(2026, 3, 2), "KB UPI (가온 체크)", 12000, "JPY", "all", "approved", "정상 승인"),
+        Transaction("txn-002", dt.date(2026, 3, 5), "KB UPI (가온 체크)", 13000, "JPY", "all", "cancelled", "오입력 취소"),
     ]
 
 
@@ -323,12 +332,14 @@ def transaction_rows(transactions: List[Transaction]) -> List[dict]:
     for txn in transactions:
         rows.append(
             {
-                "occurred_at": txn.occurred_at.strftime("%Y-%m-%d %H:%M:%S"),
+                "txn_id": txn.txn_id,
+                "txn_date": txn.txn_date,
                 "card_name": txn.card_name,
                 "amount": txn.amount,
                 "currency": txn.currency,
                 "merchant_type": txn.merchant_type,
                 "status": txn.status,
+                "note": txn.note,
             }
         )
     return rows
@@ -340,12 +351,14 @@ def rows_to_transactions(rows: List[dict]) -> List[Transaction]:
         try:
             transactions.append(
                 Transaction(
-                    occurred_at=dt.datetime.fromisoformat(str(row.get("occurred_at", "")).strip()),
+                    txn_id=str(row.get("txn_id", "")).strip(),
+                    txn_date=row.get("txn_date"),
                     card_name=str(row.get("card_name", "")),
                     amount=float(row.get("amount", 0)),
                     currency=str(row.get("currency", "JPY")),
                     merchant_type=str(row.get("merchant_type", "all")),
-                    status=str(row.get("status", "approved")),
+                    status=normalize_status(str(row.get("status", "approved"))),
+                    note=str(row.get("note", "")),
                 )
             )
         except Exception:
@@ -460,17 +473,19 @@ with st.container(border=True):
     st.session_state.promos = rows_to_promos(edited)
 
 with st.container(border=True):
-    st.subheader("거래 원장")
-    st.caption("프로모션 누적 사용 횟수/금액은 아래 원장에서 실시간 재계산되며, cancelled 상태는 제외됩니다.")
+    st.subheader("결제내역 관리")
+    st.caption("행 추가/수정 후 status를 변경해 관리하세요. 사용자 실수 복구를 위해 삭제 대신 status=cancelled 사용을 권장합니다.")
     edited_txns = st.data_editor(
         transaction_rows(st.session_state.transactions),
         num_rows="dynamic",
         use_container_width=True,
         column_config={
-            "occurred_at": st.column_config.TextColumn(help="YYYY-MM-DD HH:MM:SS"),
+            "txn_id": st.column_config.TextColumn(help="거래 식별자(중복 허용, 추적용 권장)"),
+            "txn_date": st.column_config.DateColumn(format="YYYY-MM-DD", required=True),
             "currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
             "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
+            "note": st.column_config.TextColumn(help="취소 사유/메모"),
         },
     )
     st.session_state.transactions = rows_to_transactions(edited_txns)
