@@ -62,6 +62,20 @@ def parse_bool(value: str) -> bool:
     return str(value).strip().lower() in {"true", "1", "yes", "y"}
 
 
+def parse_float_or_zero(value) -> float:
+    text = str(value or "").strip()
+    if not text:
+        return 0.0
+    return float(text)
+
+
+def parse_int_or_zero(value) -> int:
+    text = str(value or "").strip()
+    if not text:
+        return 0
+    return int(float(text))
+
+
 def normalize_status(value: str) -> str:
     status = str(value or "").strip().lower()
     if status == "cancelled":
@@ -363,18 +377,18 @@ def rows_to_promos(rows: List[dict]) -> List[CardPromo]:
                     reward_type=str(row.get("reward_type", "percent_discount")),
                     start_date=row.get("start_date"),
                     end_date=row.get("end_date"),
-                    min_amount=float(row.get("min_amount", 0)),
+                    min_amount=parse_float_or_zero(row.get("min_amount", 0)),
                     min_currency=str(row.get("min_currency", "JPY")),
-                    percent_value=float(row.get("percent_value", 0)),
-                    fixed_amount=float(row.get("fixed_amount", 0)),
-                    max_reward_per_txn=float(row.get("max_reward_per_txn", 0)),
+                    percent_value=parse_float_or_zero(row.get("percent_value", 0)),
+                    fixed_amount=parse_float_or_zero(row.get("fixed_amount", 0)),
+                    max_reward_per_txn=parse_float_or_zero(row.get("max_reward_per_txn", 0)),
                     max_reward_per_txn_currency=str(row.get("max_reward_per_txn_currency", "JPY")),
-                    max_uses=int(row.get("max_uses", 0)),
-                    total_cap_amount=float(row.get("total_cap_amount", 0)),
+                    max_uses=parse_int_or_zero(row.get("max_uses", 0)),
+                    total_cap_amount=parse_float_or_zero(row.get("total_cap_amount", 0)),
                     total_cap_currency=str(row.get("total_cap_currency", "JPY")),
-                    monthly_cashback_cap_amount=float(row.get("monthly_cashback_cap_amount", 0)),
+                    monthly_cashback_cap_amount=parse_float_or_zero(row.get("monthly_cashback_cap_amount", 0)),
                     monthly_cashback_cap_currency=str(row.get("monthly_cashback_cap_currency", "JPY")),
-                    monthly_eligible_spend_cap_amount=float(row.get("monthly_eligible_spend_cap_amount", 0)),
+                    monthly_eligible_spend_cap_amount=parse_float_or_zero(row.get("monthly_eligible_spend_cap_amount", 0)),
                     monthly_eligible_spend_cap_currency=str(row.get("monthly_eligible_spend_cap_currency", "JPY")),
                     merchant_type=str(row.get("merchant_type", "all")),
                     formula_id=str(row.get("formula_id", "")),
@@ -437,18 +451,18 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
                 "reward_type": r.get("reward_type", "percent_discount"),
                 "start_date": parse_date(r.get("start_date", "")),
                 "end_date": parse_date(r.get("end_date", "")),
-                "min_amount": float(r.get("min_amount", 0) or 0),
+                "min_amount": parse_float_or_zero(r.get("min_amount", 0)),
                 "min_currency": r.get("min_currency", "JPY") or "JPY",
-                "percent_value": float(r.get("percent_value", 0) or 0),
-                "fixed_amount": float(r.get("fixed_amount", 0) or 0),
-                "max_reward_per_txn": float(r.get("max_reward_per_txn", 0) or 0),
+                "percent_value": parse_float_or_zero(r.get("percent_value", 0)),
+                "fixed_amount": parse_float_or_zero(r.get("fixed_amount", 0)),
+                "max_reward_per_txn": parse_float_or_zero(r.get("max_reward_per_txn", 0)),
                 "max_reward_per_txn_currency": r.get("max_reward_per_txn_currency", "JPY") or "JPY",
-                "max_uses": int(r.get("max_uses", 0) or 0),
-                "total_cap_amount": float(r.get("total_cap_amount", 0) or 0),
+                "max_uses": parse_int_or_zero(r.get("max_uses", 0)),
+                "total_cap_amount": parse_float_or_zero(r.get("total_cap_amount", 0)),
                 "total_cap_currency": r.get("total_cap_currency", "JPY") or "JPY",
-                "monthly_cashback_cap_amount": float(r.get("monthly_cashback_cap_amount", 0) or 0),
+                "monthly_cashback_cap_amount": parse_float_or_zero(r.get("monthly_cashback_cap_amount", 0)),
                 "monthly_cashback_cap_currency": r.get("monthly_cashback_cap_currency", "JPY") or "JPY",
-                "monthly_eligible_spend_cap_amount": float(r.get("monthly_eligible_spend_cap_amount", 0) or 0),
+                "monthly_eligible_spend_cap_amount": parse_float_or_zero(r.get("monthly_eligible_spend_cap_amount", 0)),
                 "monthly_eligible_spend_cap_currency": r.get("monthly_eligible_spend_cap_currency", "JPY") or "JPY",
                 "merchant_type": r.get("merchant_type", "all") or "all",
                 "formula_id": r.get("formula_id", "") or "",
