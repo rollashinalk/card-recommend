@@ -567,14 +567,12 @@ if st.session_state.pending_calc:
             )
             st.session_state.transactions = txns
             st.session_state.pending_calc = None
-            st.session_state.selected_option_idx = 0
             save_app_state(st.session_state.promos, st.session_state.transactions)
             st.success("결제 내역이 원장에 추가되었습니다.")
             st.rerun()
     with col_cancel:
         if st.button("취소", use_container_width=True):
             st.session_state.pending_calc = None
-            st.session_state.selected_option_idx = 0
             st.info("결제 추가 없이 취소되었습니다.")
             st.rerun()
 
