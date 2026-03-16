@@ -404,8 +404,12 @@ if "promos" not in st.session_state or "transactions" not in st.session_state:
     loaded_promos, loaded_txns = load_app_state()
     st.session_state.promos = loaded_promos
     st.session_state.transactions = loaded_txns
-if "selected_merchant_type" not in st.session_state:
-    st.session_state.selected_merchant_type = MERCHANT_NORMAL
+if "merchant_type_input" not in st.session_state:
+    st.session_state.merchant_type_input = MERCHANT_NORMAL
+if "pay_jpy_input" not in st.session_state:
+    st.session_state.pay_jpy_input = 0
+if "last_results" not in st.session_state:
+    st.session_state.last_results = []
 
 with st.container(border=True):
     left, right = st.columns([2, 1])
@@ -425,21 +429,43 @@ with st.container(border=True):
 
 with st.container(border=True):
     st.subheader("결제 정보")
-    st.write("가맹점 유형")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        if st.button("일반", use_container_width=True, type="primary" if st.session_state.selected_merchant_type == MERCHANT_NORMAL else "secondary"):
-            st.session_state.selected_merchant_type = MERCHANT_NORMAL
-    with col_b:
-        if st.button("KB 3대 편의점(세븐, 로손, 패밀리)", use_container_width=True, type="primary" if st.session_state.selected_merchant_type == MERCHANT_KB_CVS3 else "secondary"):
-            st.session_state.selected_merchant_type = MERCHANT_KB_CVS3
-
-    merchant_type = st.session_state.selected_merchant_type
-    pay_jpy = st.number_input("결제 금액 (JPY)", min_value=0, step=1000, value=12000, format="%d")
+    merchant_type = st.radio(
+        "가맹점 유형",
+        [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
+        horizontal=True,
+        key="merchant_type_input",
+    )
+    pay_jpy = st.number_input(
+        "결제 금액 (JPY)", min_value=0, step=1000, key="pay_jpy_input", format="%d"
+    )
     pay_date = st.date_input("결제 날짜", value=dt.date.today())
 
 with st.container(border=True):
-    st.subheader("카드/행사 목록")
+    st.subheader("결제내역 원장 (취소관리 포함)")
+    st.caption("status가 cancelled인 건은 누적 혜택 계산에서 자동 제외됩니다.")
+    card_names = sorted({p.card_name for p in st.session_state.promos})
+    edited_txns = st.data_editor(
+        txn_rows(st.session_state.transactions),
+        num_rows="dynamic",
+        use_container_width=True,
+        column_config={
+            "txn_date": st.column_config.DateColumn(),
+            "card_name": st.column_config.SelectboxColumn(options=card_names),
+            "amount_jpy": st.column_config.NumberColumn(min_value=0, step=1000),
+            "merchant_type": st.column_config.SelectboxColumn(options=[MERCHANT_NORMAL, MERCHANT_KB_CVS3]),
+            "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
+        },
+    )
+    st.session_state.transactions = rows_to_txns(edited_txns)
+    save_app_state(st.session_state.promos, st.session_state.transactions)
+
+    if st.button("원장 초기화", type="secondary"):
+        st.session_state.transactions = []
+        save_app_state(st.session_state.promos, st.session_state.transactions)
+        st.rerun()
+
+with st.container(border=True):
+    st.subheader("행사 리스트")
     uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
     if uploaded_csv is not None:
         try:
@@ -466,30 +492,6 @@ with st.container(border=True):
     st.session_state.promos = rows_to_promos(edited_promos)
     save_app_state(st.session_state.promos, st.session_state.transactions)
 
-with st.container(border=True):
-    st.subheader("결제내역 원장 (취소관리 포함)")
-    st.caption("status가 cancelled인 건은 누적 혜택 계산에서 자동 제외됩니다.")
-    card_names = sorted({p.card_name for p in st.session_state.promos})
-    edited_txns = st.data_editor(
-        txn_rows(st.session_state.transactions),
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "txn_date": st.column_config.DateColumn(),
-            "card_name": st.column_config.SelectboxColumn(options=card_names),
-            "amount_jpy": st.column_config.NumberColumn(min_value=0, step=1000),
-            "merchant_type": st.column_config.SelectboxColumn(options=[MERCHANT_NORMAL, MERCHANT_KB_CVS3]),
-            "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
-        },
-    )
-    st.session_state.transactions = rows_to_txns(edited_txns)
-    save_app_state(st.session_state.promos, st.session_state.transactions)
-
-    if st.button("원장 초기화", type="secondary"):
-        st.session_state.transactions = []
-        save_app_state(st.session_state.promos, st.session_state.transactions)
-        st.rerun()
-
 if st.button("최적 카드 계산", type="primary", use_container_width=True):
     if not fx_rates:
         st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
@@ -514,15 +516,18 @@ if st.button("최적 카드 계산", type="primary", use_container_width=True):
             )
 
         results.sort(key=lambda x: x["reward_jpy"], reverse=True)
-        if not results:
-            st.info("등록된 카드 행사가 없습니다.")
-        else:
-            best = results[0]
-            st.success(f"추천 카드: {best['card_name']} | 예상 혜택 ¥{best['reward_jpy']:,.0f} (약 ${best['reward_usd']:,.2f})")
-            for i, row in enumerate(results, start=1):
-                with st.container(border=True):
-                    st.markdown(f"**{i}위. {row['card_name']}**")
-                    st.write(f"예상 혜택: ¥{row['reward_jpy']:,.0f} (약 ${row['reward_usd']:,.2f})")
-                    st.caption(f"현재 누적 적용 횟수: {row['used_count']} | 근거: {row['reason']}")
+        st.session_state.last_results = results
+        st.session_state.pay_jpy_input = 0
+        st.rerun()
+
+if st.session_state.last_results:
+    results = st.session_state.last_results
+    best = results[0]
+    st.success(f"추천 카드: {best['card_name']} | 예상 혜택 ¥{best['reward_jpy']:,.0f} (약 ${best['reward_usd']:,.2f})")
+    for i, row in enumerate(results, start=1):
+        with st.container(border=True):
+            st.markdown(f"**{i}위. {row['card_name']}**")
+            st.write(f"예상 혜택: ¥{row['reward_jpy']:,.0f} (약 ${row['reward_usd']:,.2f})")
+            st.caption(f"현재 누적 적용 횟수: {row['used_count']} | 근거: {row['reason']}")
 
 st.caption("배포용 참고: Streamlit Community Cloud에서 main 파일을 app.py로 지정하세요.")
