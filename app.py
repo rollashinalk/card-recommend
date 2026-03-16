@@ -428,12 +428,22 @@ def inject_ui_theme() -> None:
             font-size: .95rem;
         }
 
+        /* Streamlit container(border=True) wrappers */
+        [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stVerticalBlockBorderWrapper"] > div,
+        [data-testid="stVerticalBlockBorderWrapper"] > div > div {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
         div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
             border-radius: calc(var(--radius) + 2px);
-            border: none !important;
-            box-shadow: 0 14px 34px rgba(53, 99, 255, 0.08);
-            background: rgba(255,255,255,0.78);
+            box-shadow: 0 14px 34px rgba(53, 99, 255, 0.08) !important;
+            background: rgba(255,255,255,0.78) !important;
             backdrop-filter: blur(14px);
+            padding: 0.2rem 0.3rem;
         }
 
         h1, h2, h3, label, p, li, span,
@@ -446,6 +456,12 @@ def inject_ui_theme() -> None:
         div[data-testid="stCaptionContainer"] p,
         .stCaption p {
             color: var(--muted) !important;
+        }
+
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            accent-color: var(--primary) !important;
         }
 
         div[data-baseweb="input"] input,
@@ -539,7 +555,7 @@ def inject_ui_theme() -> None:
         }
 
         div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
-            margin-bottom: 0.9rem;
+            margin-bottom: 1rem;
         }
 
         .compact-meta {
