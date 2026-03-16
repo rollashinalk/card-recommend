@@ -152,7 +152,7 @@ def recalc_promo_usage(
     return used_count, total_used_amount
 
 
-def recalc_monthly_usage(
+def aggregate_monthly_usage_by_card_promo(
     promo: CardPromo,
     pay_date: dt.date,
     transactions: List[Transaction],
@@ -274,7 +274,7 @@ def evaluate(
 
     elif promo.reward_type == "cashback_with_cap":
         # 1) 건별 리워드 계산
-        raw = pay_jpy * (promo.percent_value / 100.0)
+        base_reward_jpy = pay_jpy * (promo.percent_value / 100.0)
         if promo.max_reward_per_txn > 0:
             per_txn_cap_jpy = convert(
                 promo.max_reward_per_txn,
@@ -282,12 +282,12 @@ def evaluate(
                 "JPY",
                 fx_rates,
             )
-            raw = min(raw, per_txn_cap_jpy)
+            base_reward_jpy = min(base_reward_jpy, per_txn_cap_jpy)
 
         # 2) 월 결제금액(적립 대상 사용액) 잔여 한도 반영
         reason = f"캐시백 {promo.percent_value:g}% + 한도 적용"
-        reward_jpy = raw
-        monthly_used_spend_jpy, monthly_used_cashback_jpy = recalc_monthly_usage(
+        eligible_spend_for_txn_jpy = float(pay_jpy)
+        monthly_used_spend_jpy, monthly_used_cashback_jpy = aggregate_monthly_usage_by_card_promo(
             promo,
             pay_date,
             transactions,
@@ -304,9 +304,12 @@ def evaluate(
             if monthly_spend_remaining <= 0:
                 return 0, "월 적립 대상 사용액 한도 소진"
 
-            eligible_spend_for_txn_jpy = min(float(pay_jpy), monthly_spend_remaining)
-            reward_jpy = reward_jpy * (eligible_spend_for_txn_jpy / float(pay_jpy))
+            eligible_spend_for_txn_jpy = min(eligible_spend_for_txn_jpy, monthly_spend_remaining)
             reason += f" · 월 적립대상 잔여 ¥{monthly_spend_remaining:,.0f}"
+
+        reward_jpy = eligible_spend_for_txn_jpy * (promo.percent_value / 100.0)
+        if promo.max_reward_per_txn > 0:
+            reward_jpy = min(reward_jpy, base_reward_jpy)
 
         # 3) 월 캐시백 잔여 한도 반영
         if promo.monthly_cashback_cap_amount > 0:
@@ -349,7 +352,7 @@ def seed_promotions() -> List[CardPromo]:
         CardPromo("KB UPI (가온 체크)", True, "percent_discount", dt.date(2026, 2, 14), dt.date(2026, 5, 13), 10000, "JPY", 15, 0, 2000, "JPY", 5, 0, "JPY", 0, "JPY", 0, "JPY", "all", "", ""),
         CardPromo("하나 UPI (트래블로그)", True, "percent_discount", dt.date(2026, 2, 11), dt.date(2026, 4, 30), 50, "USD", 20, 0, 10, "USD", 3, 0, "JPY", 0, "JPY", 0, "JPY", "all", "", ""),
         CardPromo("우리 UPI (SKT우리)", True, "percent_discount", dt.date(2025, 12, 22), dt.date(2026, 5, 31), 50, "USD", 11, 0, 15, "USD", 3, 0, "JPY", 0, "JPY", 0, "JPY", "all", "", ""),
-        CardPromo("BC GOAT", True, "cashback_with_cap", None, None, 0, "USD", 6, 0, 0, "USD", 0, 30000, "KRW", 10000, "KRW", 200000, "KRW", "all", "", ""),
+        CardPromo("BC GOAT", True, "cashback_with_cap", None, None, 0, "USD", 6, 0, 0, "USD", 0, 30000, "KRW", 1000000, "KRW", 200000, "KRW", "all", "", ""),
         CardPromo("KB 일본 편의점 행사 (KB 트래블러스)", True, "fixed_cashback", dt.date(2026, 3, 1), dt.date(2026, 3, 31), 1000, "JPY", 0, 500, 0, "JPY", 10, 5000, "JPY", 0, "JPY", 0, "JPY", "kb_cvs3", "", ""),
         CardPromo("신한 더모아", True, "formula_cashback", None, None, 0, "KRW", 0, 0, 0, "KRW", 0, 0, "KRW", 0, "KRW", 0, "KRW", "all", "shinhan_the_more_v1", ""),
     ]
