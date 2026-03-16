@@ -626,12 +626,22 @@ def inject_ui_theme() -> None:
         }
 
         /* 결제카드 선택 라디오(key=selected_option_idx): 타이틀+옵션을 하나의 박스로 */
+        [data-testid="stElementContainer"].st-key-selected_option_idx,
+        [data-testid="stElementContainer"].st-key-selected_option_idx > div {
+            width: 100% !important;
+            max-width: 100% !important;
+            display: block !important;
+        }
+
         .st-key-selected_option_idx div[data-testid="stRadio"] {
             background: rgba(255,255,255,0.56) !important;
             border-radius: 16px;
             padding: 0.85rem 0.75rem 0.45rem !important;
             margin-top: 0.95rem;
-            width: 100%;
+            width: 100% !important;
+            max-width: 100% !important;
+            display: block !important;
+            box-sizing: border-box;
         }
 
         .st-key-selected_option_idx [data-testid="stWidgetLabel"] p {
