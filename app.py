@@ -1,7 +1,7 @@
 import csv
-import copy
 import datetime as dt
 import io
+import json
 from dataclasses import dataclass
 from typing import List
 
@@ -29,27 +29,13 @@ class CardPromo:
     max_reward_per_txn: float
     max_reward_per_txn_currency: str
     max_uses: int
+    used_count: int
     total_cap_amount: float
     total_cap_currency: str
-    monthly_cashback_cap_amount: float
-    monthly_cashback_cap_currency: str
-    monthly_eligible_spend_cap_amount: float
-    monthly_eligible_spend_cap_currency: str
+    total_used_amount: float
     merchant_type: str
     formula_id: str
     formula_params_json: str
-
-
-@dataclass
-class Transaction:
-    txn_id: str
-    txn_date: dt.date
-    card_name: str
-    amount: float
-    currency: str
-    merchant_type: str
-    status: str
-    note: str
 
 
 def parse_date(value: str) -> dt.date | None:
@@ -61,27 +47,6 @@ def parse_date(value: str) -> dt.date | None:
 
 def parse_bool(value: str) -> bool:
     return str(value).strip().lower() in {"true", "1", "yes", "y"}
-
-
-def parse_float_or_zero(value) -> float:
-    text = str(value or "").strip()
-    if not text:
-        return 0.0
-    return float(text)
-
-
-def parse_int_or_zero(value) -> int:
-    text = str(value or "").strip()
-    if not text:
-        return 0
-    return int(float(text))
-
-
-def normalize_status(value: str) -> str:
-    status = str(value or "").strip().lower()
-    if status == "cancelled":
-        return "cancelled"
-    return "approved"
 
 
 def get_fx_rates() -> dict[str, float] | None:
@@ -116,120 +81,18 @@ def merchant_match(promo_merchant_type: str, selected_merchant_type: str) -> boo
     return False
 
 
-def calc_formula_cashback(pay_krw: int, formula_id: str, formula_params_json: str) -> float:
+def calc_formula_cashback(pay_jpy: int, formula_id: str, formula_params_json: str, fx_rates: dict[str, float]) -> tuple[float, str]:
     if formula_id != "shinhan_the_more_v1":
-        return 0.0
+        return 0.0, "미지원 공식"
 
-    # 신한 더모아 v1 규칙:
-    # - KRW 환산 결제금액 기준으로 (amount % 1000) * 2 를 캐시백으로 계산
-    # - 예시: 5,999원 -> 1,998원
-    krw_amount = int(pay_krw)
-    return float((krw_amount % 1000) * 2)
-
-
-def recalc_promo_usage(
-    promo: CardPromo,
-    transactions: List[Transaction],
-    fx_rates: dict[str, float],
-) -> tuple[int, float]:
-    used_count = 0
-    total_used_amount = 0.0
-    for txn in transactions:
-        if txn.status != "approved":
-            continue
-        if txn.card_name != promo.card_name:
-            continue
-        txn_date = txn.txn_date
-        if promo.start_date and txn_date < promo.start_date:
-            continue
-        if promo.end_date and txn_date > promo.end_date:
-            continue
-        if not merchant_match(promo.merchant_type, txn.merchant_type):
-            continue
-
-        txn_amount_in_min_currency = convert(txn.amount, txn.currency, promo.min_currency, fx_rates)
-        if txn_amount_in_min_currency < promo.min_amount:
-            continue
-
-        used_count += 1
-        total_used_amount += convert(txn.amount, txn.currency, promo.total_cap_currency, fx_rates)
-
-    return used_count, total_used_amount
-
-
-def aggregate_monthly_usage_by_card_promo(
-    promo: CardPromo,
-    pay_date: dt.date,
-    transactions: List[Transaction],
-    fx_rates: dict[str, float],
-) -> tuple[float, float]:
-    monthly_used_spend_jpy = 0.0
-    monthly_used_cashback_jpy = 0.0
-    target_year_month = pay_date.strftime("%Y-%m")
-
-    monthly_approved_txns = [
-        txn
-        for txn in transactions
-        if txn.status == "approved"
-        and txn.card_name == promo.card_name
-        and txn.txn_date.strftime("%Y-%m") == target_year_month
-        and txn.txn_date <= pay_date
-        and (not promo.start_date or txn.txn_date >= promo.start_date)
-        and (not promo.end_date or txn.txn_date <= promo.end_date)
-        and merchant_match(promo.merchant_type, txn.merchant_type)
-    ]
-    monthly_approved_txns.sort(key=lambda txn: (txn.txn_date, txn.txn_id))
-
-    for txn in monthly_approved_txns:
-        txn_amount_min_currency = convert(txn.amount, txn.currency, promo.min_currency, fx_rates)
-        if txn_amount_min_currency < promo.min_amount:
-            continue
-
-        txn_amount_jpy = convert(txn.amount, txn.currency, "JPY", fx_rates)
-        eligible_spend_jpy = txn_amount_jpy
-
-        if promo.monthly_eligible_spend_cap_amount > 0:
-            monthly_spend_cap_jpy = convert(
-                promo.monthly_eligible_spend_cap_amount,
-                promo.monthly_eligible_spend_cap_currency,
-                "JPY",
-                fx_rates,
-            )
-            monthly_spend_remaining = max(monthly_spend_cap_jpy - monthly_used_spend_jpy, 0)
-            if monthly_spend_remaining <= 0:
-                continue
-            eligible_spend_jpy = min(eligible_spend_jpy, monthly_spend_remaining)
-
-        monthly_used_spend_jpy += eligible_spend_jpy
-
-        if promo.reward_type != "cashback_with_cap":
-            continue
-
-        reward_jpy = eligible_spend_jpy * (promo.percent_value / 100.0)
-        if promo.max_reward_per_txn > 0:
-            per_txn_cap_jpy = convert(
-                promo.max_reward_per_txn,
-                promo.max_reward_per_txn_currency,
-                "JPY",
-                fx_rates,
-            )
-            reward_jpy = min(reward_jpy, per_txn_cap_jpy)
-
-        if promo.monthly_cashback_cap_amount > 0:
-            monthly_cashback_cap_jpy = convert(
-                promo.monthly_cashback_cap_amount,
-                promo.monthly_cashback_cap_currency,
-                "JPY",
-                fx_rates,
-            )
-            monthly_cashback_remaining = max(monthly_cashback_cap_jpy - monthly_used_cashback_jpy, 0)
-            if monthly_cashback_remaining <= 0:
-                continue
-            reward_jpy = min(reward_jpy, monthly_cashback_remaining)
-
-        monthly_used_cashback_jpy += max(reward_jpy, 0)
-
-    return monthly_used_spend_jpy, monthly_used_cashback_jpy
+    # 신한 더모아 v1: 원화 환산 결제금액의 (1000원 미만 나머지) x 2
+    # 예) 5,999원 -> 999 x 2 = 1,998원
+    pay_krw = int(round(convert(float(pay_jpy), "JPY", "KRW", fx_rates)))
+    lower_thousand = pay_krw % 1000
+    cashback_krw = lower_thousand * 2
+    cashback_jpy = convert(float(cashback_krw), "KRW", "JPY", fx_rates)
+    reason = f"더모아 공식: ({pay_krw:,}원 % 1000={lower_thousand:,}) x 2 = {cashback_krw:,}원"
+    return cashback_jpy, reason
 
 
 def evaluate(
@@ -238,10 +101,7 @@ def evaluate(
     pay_date: dt.date,
     merchant_type: str,
     fx_rates: dict[str, float],
-    transactions: List[Transaction],
 ) -> tuple[int, str]:
-    used_count, total_used_amount = recalc_promo_usage(promo, transactions, fx_rates)
-
     if not promo.enabled:
         return 0, "카드 비활성화"
     if promo.start_date and pay_date < promo.start_date:
@@ -250,7 +110,7 @@ def evaluate(
         return 0, "행사 종료 후"
     if not merchant_match(promo.merchant_type, merchant_type):
         return 0, "가맹점 조건 불일치"
-    if promo.max_uses > 0 and used_count >= promo.max_uses:
+    if promo.max_uses > 0 and promo.used_count >= promo.max_uses:
         return 0, "사용 횟수 소진"
 
     pay_in_min_currency = convert(float(pay_jpy), "JPY", promo.min_currency, fx_rates)
@@ -278,8 +138,7 @@ def evaluate(
         reason = f"정액 캐시백 {promo.fixed_amount:g} {promo.min_currency}"
 
     elif promo.reward_type == "cashback_with_cap":
-        # 1) 건별 리워드 계산
-        base_reward_jpy = pay_jpy * (promo.percent_value / 100.0)
+        raw = pay_jpy * (promo.percent_value / 100.0)
         if promo.max_reward_per_txn > 0:
             per_txn_cap_jpy = convert(
                 promo.max_reward_per_txn,
@@ -287,62 +146,22 @@ def evaluate(
                 "JPY",
                 fx_rates,
             )
-            base_reward_jpy = min(base_reward_jpy, per_txn_cap_jpy)
-
-        # 2) 월 결제금액(적립 대상 사용액) 잔여 한도 반영
+            raw = min(raw, per_txn_cap_jpy)
+        reward_jpy = raw
         reason = f"캐시백 {promo.percent_value:g}% + 한도 적용"
-        eligible_spend_for_txn_jpy = float(pay_jpy)
-        monthly_used_spend_jpy, monthly_used_cashback_jpy = aggregate_monthly_usage_by_card_promo(
-            promo,
-            pay_date,
-            transactions,
-            fx_rates,
-        )
-        if promo.monthly_eligible_spend_cap_amount > 0:
-            monthly_spend_cap_jpy = convert(
-                promo.monthly_eligible_spend_cap_amount,
-                promo.monthly_eligible_spend_cap_currency,
-                "JPY",
-                fx_rates,
-            )
-            monthly_spend_remaining = max(monthly_spend_cap_jpy - monthly_used_spend_jpy, 0)
-            if monthly_spend_remaining <= 0:
-                return 0, "월 적립 대상 사용액 한도 소진"
-
-            eligible_spend_for_txn_jpy = min(eligible_spend_for_txn_jpy, monthly_spend_remaining)
-            reason += f" · 월 적립대상 잔여 ¥{monthly_spend_remaining:,.0f}"
-
-        reward_jpy = eligible_spend_for_txn_jpy * (promo.percent_value / 100.0)
-        if promo.max_reward_per_txn > 0:
-            reward_jpy = min(reward_jpy, base_reward_jpy)
-
-        # 3) 월 캐시백 잔여 한도 반영
-        if promo.monthly_cashback_cap_amount > 0:
-            monthly_cashback_cap_jpy = convert(
-                promo.monthly_cashback_cap_amount,
-                promo.monthly_cashback_cap_currency,
-                "JPY",
-                fx_rates,
-            )
-            monthly_cashback_remaining = max(monthly_cashback_cap_jpy - monthly_used_cashback_jpy, 0)
-            if monthly_cashback_remaining <= 0:
-                return 0, "월 캐시백 한도 소진"
-
-            reward_jpy = min(reward_jpy, monthly_cashback_remaining)
-            reason += f" · 월 캐시백 잔여 ¥{monthly_cashback_remaining:,.0f}"
 
     elif promo.reward_type == "formula_cashback":
-        pay_krw = int(round(convert(float(pay_jpy), "JPY", "KRW", fx_rates)))
-        reward_krw = calc_formula_cashback(pay_krw, promo.formula_id, promo.formula_params_json)
-        reward_jpy = convert(reward_krw, "KRW", "JPY", fx_rates)
-        reason = f"공식 캐시백 ({promo.formula_id})"
+        reward_jpy, formula_reason = calc_formula_cashback(
+            pay_jpy, promo.formula_id, promo.formula_params_json, fx_rates
+        )
+        reason = f"공식 캐시백 ({promo.formula_id}) · {formula_reason}"
 
     else:
         return 0, "지원하지 않는 리워드 타입"
 
     if promo.total_cap_amount > 0:
         total_cap_jpy = convert(promo.total_cap_amount, promo.total_cap_currency, "JPY", fx_rates)
-        total_used_jpy = convert(total_used_amount, promo.total_cap_currency, "JPY", fx_rates)
+        total_used_jpy = convert(promo.total_used_amount, promo.total_cap_currency, "JPY", fx_rates)
         remaining = max(total_cap_jpy - total_used_jpy, 0)
         if remaining <= 0:
             return 0, "총 한도 소진"
@@ -354,19 +173,12 @@ def evaluate(
 
 def seed_promotions() -> List[CardPromo]:
     return [
-        CardPromo("KB UPI (가온 체크)", True, "percent_discount", dt.date(2026, 2, 14), dt.date(2026, 5, 13), 10000, "JPY", 15, 0, 2000, "JPY", 5, 0, "JPY", 0, "JPY", 0, "JPY", "all", "", ""),
-        CardPromo("하나 UPI (트래블로그)", True, "percent_discount", dt.date(2026, 2, 11), dt.date(2026, 4, 30), 50, "USD", 20, 0, 10, "USD", 3, 0, "JPY", 0, "JPY", 0, "JPY", "all", "", ""),
-        CardPromo("우리 UPI (SKT우리)", True, "percent_discount", dt.date(2025, 12, 22), dt.date(2026, 5, 31), 50, "USD", 11, 0, 15, "USD", 3, 0, "JPY", 0, "JPY", 0, "JPY", "all", "", ""),
-        CardPromo("BC GOAT", True, "cashback_with_cap", None, None, 0, "USD", 6, 0, 0, "USD", 0, 30000, "KRW", 1000000, "KRW", 200000, "KRW", "all", "", ""),
-        CardPromo("KB 일본 편의점 행사 (KB 트래블러스)", True, "fixed_cashback", dt.date(2026, 3, 1), dt.date(2026, 3, 31), 1000, "JPY", 0, 500, 0, "JPY", 10, 5000, "JPY", 0, "JPY", 0, "JPY", "kb_cvs3", "", ""),
-        CardPromo("신한 더모아", True, "formula_cashback", None, None, 0, "KRW", 0, 0, 0, "KRW", 0, 0, "KRW", 0, "KRW", 0, "KRW", "all", "shinhan_the_more_v1", ""),
-    ]
-
-
-def seed_transactions() -> List[Transaction]:
-    return [
-        Transaction("txn-001", dt.date(2026, 3, 2), "KB UPI (가온 체크)", 12000, "JPY", "all", "approved", "정상 승인"),
-        Transaction("txn-002", dt.date(2026, 3, 5), "KB UPI (가온 체크)", 13000, "JPY", "all", "cancelled", "오입력 취소"),
+        CardPromo("KB UPI (가온 체크)", True, "percent_discount", dt.date(2026, 2, 14), dt.date(2026, 5, 13), 10000, "JPY", 15, 0, 2000, "JPY", 5, 0, 0, "JPY", 0, "all", "", ""),
+        CardPromo("하나 UPI (트래블로그)", True, "percent_discount", dt.date(2026, 2, 11), dt.date(2026, 4, 30), 50, "USD", 20, 0, 10, "USD", 3, 0, 0, "JPY", 0, "all", "", ""),
+        CardPromo("우리 UPI (SKT우리)", True, "percent_discount", dt.date(2025, 12, 22), dt.date(2026, 5, 31), 50, "USD", 11, 0, 15, "USD", 3, 0, 0, "JPY", 0, "all", "", ""),
+        CardPromo("BC GOAT", True, "cashback_with_cap", None, None, 0, "USD", 6, 0, 0, "USD", 0, 0, 30000, "KRW", 0, "all", "", ""),
+        CardPromo("KB 일본 편의점 행사 (KB 트래블러스)", True, "fixed_cashback", dt.date(2026, 3, 1), dt.date(2026, 3, 31), 1000, "JPY", 0, 500, 0, "JPY", 10, 0, 5000, "JPY", 0, "kb_cvs3", "", ""),
+        CardPromo("신한 더모아", True, "formula_cashback", None, None, 0, "KRW", 0, 0, 0, "KRW", 0, 0, 0, "KRW", 0, "all", "shinhan_the_more_v1", ""),
     ]
 
 
@@ -385,19 +197,17 @@ def rows_to_promos(rows: List[dict]) -> List[CardPromo]:
                     reward_type=str(row.get("reward_type", "percent_discount")),
                     start_date=row.get("start_date"),
                     end_date=row.get("end_date"),
-                    min_amount=parse_float_or_zero(row.get("min_amount", 0)),
+                    min_amount=float(row.get("min_amount", 0)),
                     min_currency=str(row.get("min_currency", "JPY")),
-                    percent_value=parse_float_or_zero(row.get("percent_value", 0)),
-                    fixed_amount=parse_float_or_zero(row.get("fixed_amount", 0)),
-                    max_reward_per_txn=parse_float_or_zero(row.get("max_reward_per_txn", 0)),
+                    percent_value=float(row.get("percent_value", 0)),
+                    fixed_amount=float(row.get("fixed_amount", 0)),
+                    max_reward_per_txn=float(row.get("max_reward_per_txn", 0)),
                     max_reward_per_txn_currency=str(row.get("max_reward_per_txn_currency", "JPY")),
-                    max_uses=parse_int_or_zero(row.get("max_uses", 0)),
-                    total_cap_amount=parse_float_or_zero(row.get("total_cap_amount", 0)),
+                    max_uses=int(row.get("max_uses", 0)),
+                    used_count=int(row.get("used_count", 0)),
+                    total_cap_amount=float(row.get("total_cap_amount", 0)),
                     total_cap_currency=str(row.get("total_cap_currency", "JPY")),
-                    monthly_cashback_cap_amount=parse_float_or_zero(row.get("monthly_cashback_cap_amount", 0)),
-                    monthly_cashback_cap_currency=str(row.get("monthly_cashback_cap_currency", "JPY")),
-                    monthly_eligible_spend_cap_amount=parse_float_or_zero(row.get("monthly_eligible_spend_cap_amount", 0)),
-                    monthly_eligible_spend_cap_currency=str(row.get("monthly_eligible_spend_cap_currency", "JPY")),
+                    total_used_amount=float(row.get("total_used_amount", 0)),
                     merchant_type=str(row.get("merchant_type", "all")),
                     formula_id=str(row.get("formula_id", "")),
                     formula_params_json=str(row.get("formula_params_json", "")),
@@ -406,75 +216,6 @@ def rows_to_promos(rows: List[dict]) -> List[CardPromo]:
         except Exception:
             continue
     return promos
-
-
-def transaction_rows(transactions: List[Transaction]) -> List[dict]:
-    rows = []
-    for txn in transactions:
-        rows.append(
-            {
-                "txn_id": txn.txn_id,
-                "txn_date": txn.txn_date,
-                "card_name": txn.card_name,
-                "amount": txn.amount,
-                "currency": txn.currency,
-                "merchant_type": txn.merchant_type,
-                "status": txn.status,
-                "note": txn.note,
-            }
-        )
-    return rows
-
-
-def rows_to_transactions(rows: List[dict]) -> List[Transaction]:
-    transactions = []
-    for row in rows:
-        try:
-            transactions.append(
-                Transaction(
-                    txn_id=str(row.get("txn_id", "")).strip(),
-                    txn_date=row.get("txn_date"),
-                    card_name=str(row.get("card_name", "")),
-                    amount=float(row.get("amount", 0)),
-                    currency=str(row.get("currency", "JPY")),
-                    merchant_type=str(row.get("merchant_type", "all")),
-                    status=normalize_status(str(row.get("status", "approved"))),
-                    note=str(row.get("note", "")),
-                )
-            )
-        except Exception:
-            continue
-    return transactions
-
-
-def has_transaction_changes(before: List[Transaction], after: List[Transaction]) -> bool:
-    return transaction_rows(before) != transaction_rows(after)
-
-
-def validate_transactions(transactions: List[Transaction], valid_card_names: set[str]) -> tuple[bool, list[str], list[str]]:
-    errors: list[str] = []
-    warnings: list[str] = []
-
-    today = dt.date.today()
-    future_ids = []
-    unknown_card_ids = []
-
-    for txn in transactions:
-        if txn.amount < 0:
-            errors.append(
-                f"거래 '{txn.txn_id or '(ID 없음)'}'의 금액이 음수입니다 ({txn.amount:g}). 0 이상으로 입력해 주세요."
-            )
-        if txn.txn_date > today:
-            future_ids.append(txn.txn_id or "(ID 없음)")
-        if txn.card_name and txn.card_name not in valid_card_names:
-            unknown_card_ids.append(txn.txn_id or "(ID 없음)")
-
-    if future_ids:
-        warnings.append(f"미래 날짜 거래가 있습니다: {', '.join(future_ids)}")
-    if unknown_card_ids:
-        warnings.append(f"행사 목록에 없는 카드명이 있습니다: {', '.join(unknown_card_ids)}")
-
-    return (len(errors) == 0), errors, warnings
 
 
 def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
@@ -489,19 +230,17 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
                 "reward_type": r.get("reward_type", "percent_discount"),
                 "start_date": parse_date(r.get("start_date", "")),
                 "end_date": parse_date(r.get("end_date", "")),
-                "min_amount": parse_float_or_zero(r.get("min_amount", 0)),
+                "min_amount": float(r.get("min_amount", 0) or 0),
                 "min_currency": r.get("min_currency", "JPY") or "JPY",
-                "percent_value": parse_float_or_zero(r.get("percent_value", 0)),
-                "fixed_amount": parse_float_or_zero(r.get("fixed_amount", 0)),
-                "max_reward_per_txn": parse_float_or_zero(r.get("max_reward_per_txn", 0)),
+                "percent_value": float(r.get("percent_value", 0) or 0),
+                "fixed_amount": float(r.get("fixed_amount", 0) or 0),
+                "max_reward_per_txn": float(r.get("max_reward_per_txn", 0) or 0),
                 "max_reward_per_txn_currency": r.get("max_reward_per_txn_currency", "JPY") or "JPY",
-                "max_uses": parse_int_or_zero(r.get("max_uses", 0)),
-                "total_cap_amount": parse_float_or_zero(r.get("total_cap_amount", 0)),
+                "max_uses": int(r.get("max_uses", 0) or 0),
+                "used_count": int(r.get("used_count", 0) or 0),
+                "total_cap_amount": float(r.get("total_cap_amount", 0) or 0),
                 "total_cap_currency": r.get("total_cap_currency", "JPY") or "JPY",
-                "monthly_cashback_cap_amount": parse_float_or_zero(r.get("monthly_cashback_cap_amount", 0)),
-                "monthly_cashback_cap_currency": r.get("monthly_cashback_cap_currency", "JPY") or "JPY",
-                "monthly_eligible_spend_cap_amount": parse_float_or_zero(r.get("monthly_eligible_spend_cap_amount", 0)),
-                "monthly_eligible_spend_cap_currency": r.get("monthly_eligible_spend_cap_currency", "JPY") or "JPY",
+                "total_used_amount": float(r.get("total_used_amount", 0) or 0),
                 "merchant_type": r.get("merchant_type", "all") or "all",
                 "formula_id": r.get("formula_id", "") or "",
                 "formula_params_json": r.get("formula_params_json", "") or "",
@@ -515,10 +254,6 @@ st.caption("JPY 결제 금액(정수)과 가맹점 버튼을 선택하면, 카�
 
 if "promos" not in st.session_state:
     st.session_state.promos = seed_promotions()
-if "transactions" not in st.session_state:
-    st.session_state.transactions = seed_transactions()
-if "transactions_prev" not in st.session_state:
-    st.session_state.transactions_prev = None
 if "selected_merchant_type" not in st.session_state:
     st.session_state.selected_merchant_type = MERCHANT_NORMAL
 
@@ -573,92 +308,11 @@ with st.container(border=True):
             "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "monthly_cashback_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "monthly_eligible_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
-            "formula_params_json": st.column_config.TextColumn(help="선택 입력(현재 shinhan_the_more_v1은 파라미터 미사용)"),
+            "formula_params_json": st.column_config.TextColumn(help='예: {"unit":1000,"amount_per_unit":100}'),
         },
     )
     st.session_state.promos = rows_to_promos(edited)
-
-with st.container(border=True):
-    st.subheader("결제내역 관리")
-    st.caption("행 추가/수정 후 status를 변경해 관리하세요. 삭제보다 approved → cancelled 상태 전환을 기본으로 권장합니다.")
-
-    if st.button("최근 변경 되돌리기", use_container_width=True, disabled=st.session_state.transactions_prev is None):
-        st.session_state.transactions = copy.deepcopy(st.session_state.transactions_prev)
-        st.session_state.transactions_prev = None
-        st.success("직전 스냅샷으로 복원했습니다.")
-
-    edited_txns = st.data_editor(
-        transaction_rows(st.session_state.transactions),
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "txn_id": st.column_config.TextColumn(help="거래 식별자(중복 허용, 추적용 권장)"),
-            "txn_date": st.column_config.DateColumn(format="YYYY-MM-DD", required=True),
-            "currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
-            "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
-            "note": st.column_config.TextColumn(help="취소 사유/메모"),
-        },
-    )
-
-    candidate_transactions = rows_to_transactions(edited_txns)
-    valid_card_names = {promo.card_name for promo in st.session_state.promos if promo.card_name.strip()}
-    valid, txn_errors, txn_warnings = validate_transactions(candidate_transactions, valid_card_names)
-
-    if valid and has_transaction_changes(st.session_state.transactions, candidate_transactions):
-        st.session_state.transactions_prev = copy.deepcopy(st.session_state.transactions)
-        st.session_state.transactions = candidate_transactions
-
-    for err in txn_errors:
-        st.error(err)
-    for warn in txn_warnings:
-        st.warning(warn)
-
-    approved_candidates = [
-        txn
-        for txn in st.session_state.transactions
-        if txn.status == "approved"
-    ]
-    approved_options = {
-        f"{txn.txn_id or '(ID 없음)'} | {txn.txn_date.isoformat()} | {txn.card_name} | {txn.amount:g} {txn.currency}": txn.txn_id
-        for txn in approved_candidates
-    }
-
-    col_quick, col_hint = st.columns([1, 1])
-    with col_quick:
-        selected_txn_label = st.selectbox(
-            "취소 처리 대상",
-            options=list(approved_options.keys()),
-            disabled=not approved_options,
-            index=None,
-            placeholder="승인 거래를 선택하세요",
-        )
-        if st.button("취소 처리", use_container_width=True, disabled=not approved_options):
-            if not selected_txn_label:
-                st.warning("취소 처리할 거래를 먼저 선택해 주세요.")
-            else:
-                target_txn_id = approved_options[selected_txn_label]
-                target_index = next(
-                    (
-                        idx
-                        for idx, txn in enumerate(st.session_state.transactions)
-                        if txn.txn_id == target_txn_id and txn.status == "approved"
-                    ),
-                    -1,
-                )
-                if target_index >= 0:
-                    st.session_state.transactions_prev = copy.deepcopy(st.session_state.transactions)
-                    st.session_state.transactions[target_index].status = "cancelled"
-                    if not st.session_state.transactions[target_index].note.strip():
-                        st.session_state.transactions[target_index].note = "빠른 액션으로 취소 처리"
-                    st.success("선택 거래를 cancelled 상태로 변경했습니다.")
-                else:
-                    st.warning("해당 거래를 찾을 수 없거나 이미 취소된 상태입니다.")
-    with col_hint:
-        st.info("빠른 액션은 거래를 삭제하지 않고 상태를 approved → cancelled로 전환합니다.")
 
 if st.button("최적 카드 계산", type="primary", use_container_width=True):
     if not fx_rates:
@@ -668,14 +322,7 @@ if st.button("최적 카드 계산", type="primary", use_container_width=True):
     else:
         results = []
         for promo in st.session_state.promos:
-            reward_jpy, reason = evaluate(
-                promo,
-                int(pay_jpy),
-                pay_date,
-                merchant_type,
-                fx_rates,
-                st.session_state.transactions,
-            )
+            reward_jpy, reason = evaluate(promo, int(pay_jpy), pay_date, merchant_type, fx_rates)
             reward_usd = convert(float(reward_jpy), "JPY", "USD", fx_rates)
             results.append({"card_name": promo.card_name, "reward_jpy": reward_jpy, "reward_usd": reward_usd, "reason": reason})
 
