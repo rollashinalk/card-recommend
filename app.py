@@ -364,7 +364,10 @@ def inject_ui_theme() -> None:
     st.markdown(
         """
         <style>
-        :root {
+        :root,
+        [data-theme="light"],
+        [data-theme="dark"] {
+            color-scheme: light;
             --bg: #f5f8ff;
             --card: #ffffff;
             --line: #dbe5f5;
@@ -372,16 +375,17 @@ def inject_ui_theme() -> None:
             --muted: #667085;
             --primary: #3563ff;
             --primary-dark: #274dd6;
+            --primary-soft: #eaf0ff;
             --shadow: 0 16px 36px rgba(30, 64, 175, 0.10);
             --radius: 18px;
         }
 
-        .stApp {
+        html, body, [data-testid="stAppViewContainer"], .stApp {
             background:
                 radial-gradient(circle at 12% -20%, #dbeafe 0%, transparent 45%),
                 radial-gradient(circle at 90% 8%, #e0e7ff 0%, transparent 30%),
-                var(--bg);
-            color: var(--text);
+                var(--bg) !important;
+            color: var(--text) !important;
         }
 
         .main .block-container {
@@ -413,6 +417,7 @@ def inject_ui_theme() -> None:
             font-size: clamp(1.5rem, 2.3vw, 2.1rem);
             letter-spacing: -.02em;
             line-height: 1.2;
+            color: var(--text);
         }
 
         .hero-banner p {
@@ -425,12 +430,20 @@ def inject_ui_theme() -> None:
             border-radius: var(--radius);
             border: 1px solid var(--line);
             box-shadow: var(--shadow);
-            background: rgba(255,255,255,0.90);
+            background: rgba(255,255,255,0.92);
             backdrop-filter: blur(8px);
         }
 
-        h2, h3 {
-            letter-spacing: -.01em;
+        h1, h2, h3, label, p, li, span,
+        div[data-testid="stMarkdownContainer"] p,
+        div[data-testid="stRadio"] label p,
+        div[data-testid="stCaptionContainer"] p {
+            color: var(--text) !important;
+        }
+
+        div[data-testid="stCaptionContainer"] p,
+        .stCaption p {
+            color: var(--muted) !important;
         }
 
         div[data-baseweb="input"] input,
@@ -439,6 +452,8 @@ def inject_ui_theme() -> None:
         textarea {
             border-radius: 12px !important;
             border-color: var(--line) !important;
+            background: #fff !important;
+            color: var(--text) !important;
             min-height: 42px;
         }
 
@@ -452,7 +467,9 @@ def inject_ui_theme() -> None:
             border-radius: 12px;
             min-height: 42px;
             font-weight: 650;
-            border: 1px solid transparent;
+            border: 1px solid #d9e2ff;
+            background: var(--primary-soft);
+            color: #2b3f87;
         }
 
         .stButton > button[kind="primary"] {
@@ -465,9 +482,27 @@ def inject_ui_theme() -> None:
             filter: brightness(0.97);
         }
 
-        div[data-testid="stRadio"] label p,
-        div[data-testid="stMarkdownContainer"] p {
-            color: var(--text);
+        button[role="tab"] {
+            border-radius: 10px;
+            color: #445172 !important;
+        }
+
+        button[role="tab"][aria-selected="true"] {
+            background: var(--primary-soft) !important;
+            color: #2f4dbe !important;
+            font-weight: 700;
+        }
+
+        div[data-testid="stAlert"] {
+            border-radius: 12px;
+            border: 1px solid #d8e4ff;
+            background: #f7f9ff;
+        }
+
+        div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            overflow: hidden;
         }
 
         @media (max-width: 768px) {
