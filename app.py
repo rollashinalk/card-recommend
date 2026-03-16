@@ -368,6 +368,8 @@ def inject_ui_theme() -> None:
         [data-theme="light"],
         [data-theme="dark"] {
             color-scheme: light;
+            --primary-color: #3563ff !important;
+            --link-color: #3563ff !important;
             --bg: #f5f8ff;
             --card: #ffffff;
             --line: #dbe5f5;
@@ -463,22 +465,27 @@ def inject_ui_theme() -> None:
             box-shadow: 0 0 0 3px rgba(53,99,255,.14);
         }
 
-        .stButton > button {
+        .stButton > button,
+        [data-testid="stFormSubmitButton"] > button {
             border-radius: 12px;
             min-height: 42px;
             font-weight: 650;
-            border: 1px solid #d9e2ff;
-            background: var(--primary-soft);
-            color: #2b3f87;
+            border: 1px solid #d9e2ff !important;
+            background: var(--primary-soft) !important;
+            color: #2b3f87 !important;
         }
 
-        .stButton > button[kind="primary"] {
-            color: #fff;
-            background: linear-gradient(180deg, #4d75ff 0%, #355ff3 100%);
-            border-color: #355ff3;
+        .stButton > button[kind="primary"],
+        .stButton > button[data-testid="baseButton-primary"],
+        [data-testid="stFormSubmitButton"] > button,
+        [data-testid="stFormSubmitButton"] > button[kind="primary"] {
+            color: #ffffff !important;
+            background: linear-gradient(180deg, #4d75ff 0%, #355ff3 100%) !important;
+            border-color: #355ff3 !important;
         }
 
-        .stButton > button:hover {
+        .stButton > button:hover,
+        [data-testid="stFormSubmitButton"] > button:hover {
             filter: brightness(0.97);
         }
 
@@ -489,20 +496,31 @@ def inject_ui_theme() -> None:
             padding-bottom: 0.1rem;
         }
 
-        button[role="tab"] {
+        [data-baseweb="tab"] {
+            background: transparent !important;
+        }
+
+        button[role="tab"],
+        [data-baseweb="tab"] > button {
             border: 0 !important;
             background: transparent !important;
             box-shadow: none !important;
-            border-radius: 10px;
+            border-radius: 0 !important;
             color: #445172 !important;
             padding: 0.45rem 0.7rem;
         }
 
-        button[role="tab"][aria-selected="true"] {
-            background: var(--primary-soft) !important;
+        button[role="tab"][aria-selected="true"],
+        [data-baseweb="tab"] > button[aria-selected="true"] {
+            background: transparent !important;
             color: #2f4dbe !important;
             font-weight: 700;
             border-bottom: 2px solid var(--primary) !important;
+        }
+
+        [data-baseweb="tab-highlight"] {
+            background: var(--primary) !important;
+            height: 2px !important;
         }
 
         div[data-testid="stAlert"] {
