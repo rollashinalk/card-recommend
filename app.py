@@ -5,6 +5,7 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List
+from zoneinfo import ZoneInfo
 
 import requests
 import streamlit as st
@@ -15,6 +16,7 @@ APP_STATE_PATH = Path("app_state.json")
 MERCHANT_NORMAL = "일반"
 MERCHANT_KB_CVS3 = "KB 3대 편의점(세븐, 로손, 패밀리)"
 SUPPORTED_CURRENCIES = ["JPY", "USD", "KRW"]
+KST = ZoneInfo("Asia/Seoul")
 
 
 @dataclass
@@ -701,7 +703,7 @@ with tab_reco:
 
         if refresh or "fx_rates" not in st.session_state:
             st.session_state.fx_rates = get_fx_rates()
-            st.session_state.fx_updated_at = dt.datetime.now() if st.session_state.fx_rates else None
+            st.session_state.fx_updated_at = dt.datetime.now(tz=KST) if st.session_state.fx_rates else None
 
         fx_rates = st.session_state.fx_rates
         if fx_rates:
