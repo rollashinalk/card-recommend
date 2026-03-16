@@ -19,6 +19,9 @@ Streamlit Community Cloud에 바로 배포할 수 있는 카드 추천 앱입니
   - `cashback_with_cap`
   - `formula_cashback`
 - 카드/행사 테이블 직접 수정 + CSV 업로드
+- 결제내역 원장(approved/cancelled) 관리
+- 취소건 자동 제외 기반 누적 계산
+- `app_state.json` 파일로 로컬 영속 저장(새로고침/재시작 후 유지)
 
 ## 프로모션 CSV 컬럼
 `card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,used_count,total_cap_amount,total_cap_currency,total_used_amount,monthly_spend_cap_amount,monthly_spend_cap_currency,monthly_spend_used_amount,monthly_reward_cap_amount,monthly_reward_cap_currency,monthly_reward_used_amount,merchant_type,formula_id,formula_params_json`
