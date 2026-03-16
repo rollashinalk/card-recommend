@@ -408,8 +408,29 @@ if "merchant_type_input" not in st.session_state:
     st.session_state.merchant_type_input = MERCHANT_NORMAL
 if "pay_jpy_input" not in st.session_state:
     st.session_state.pay_jpy_input = 0
-if "last_results" not in st.session_state:
-    st.session_state.last_results = []
+if "pending_calc" not in st.session_state:
+    st.session_state.pending_calc = None
+if "selected_option_idx" not in st.session_state:
+    st.session_state.selected_option_idx = 0
+
+
+def format_money(amount: float, currency: str) -> str:
+    if currency in ["JPY", "KRW"]:
+        return f"{currency} {amount:,.0f}"
+    return f"{currency} {amount:,.2f}"
+
+
+def benefit_display_currency(promo: CardPromo) -> str:
+    if promo.reward_type == "formula_cashback":
+        return "KRW"
+    if promo.reward_type == "cashback_with_cap" and promo.monthly_reward_cap_amount > 0:
+        return promo.monthly_reward_cap_currency
+    if promo.reward_type == "fixed_cashback":
+        return promo.min_currency
+    if promo.max_reward_per_txn > 0:
+        return promo.max_reward_per_txn_currency
+    return "JPY"
+
 
 with st.container(border=True):
     left, right = st.columns([2, 1])
@@ -440,6 +461,117 @@ with st.container(border=True):
     )
     pay_date = st.date_input("결제 날짜", value=dt.date.today())
     calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
+
+if calculate_clicked:
+    if not fx_rates:
+        st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
+    elif pay_jpy <= 0:
+        st.warning("결제 금액을 0보다 크게 입력해 주세요.")
+    else:
+        options = []
+        for promo in st.session_state.promos:
+            state = build_state_from_ledger(promo, st.session_state.transactions, fx_rates)
+            reward_jpy, reason, _, _, _, _ = eval_for_payment(
+                promo, int(pay_jpy), pay_date, merchant_type, fx_rates, state
+            )
+            display_cur = benefit_display_currency(promo)
+            reward_native = convert(float(reward_jpy), "JPY", display_cur, fx_rates) if reward_jpy > 0 else 0.0
+            remaining_uses = "무제한" if promo.max_uses <= 0 else max(promo.max_uses - state.used_count, 0)
+            total_remain_text = "제한없음"
+            if promo.total_cap_amount > 0:
+                total_remain_jpy = max(
+                    convert(promo.total_cap_amount, promo.total_cap_currency, "JPY", fx_rates) - state.total_used_jpy,
+                    0,
+                )
+                total_remain_text = format_money(total_remain_jpy, "JPY")
+
+            mkey = month_key(pay_date)
+            monthly_remain_text = "제한없음"
+            if promo.monthly_reward_cap_amount > 0:
+                used_r = state.month_reward_used.get(mkey, 0.0)
+                rem_r = max(promo.monthly_reward_cap_amount - used_r, 0)
+                monthly_remain_text = format_money(rem_r, promo.monthly_reward_cap_currency)
+
+            options.append(
+                {
+                    "card_name": promo.card_name,
+                    "reward_jpy": reward_jpy,
+                    "reward_native": reward_native,
+                    "reward_currency": display_cur,
+                    "reason": reason,
+                    "remaining_uses": remaining_uses,
+                    "total_remain_text": total_remain_text,
+                    "monthly_remain_text": monthly_remain_text,
+                }
+            )
+
+        options.sort(key=lambda x: x["reward_jpy"], reverse=True)
+        st.session_state.pending_calc = {
+            "pay_jpy": int(pay_jpy),
+            "pay_date": pay_date.isoformat(),
+            "merchant_type": merchant_type,
+            "options": options,
+        }
+        st.session_state.selected_option_idx = 0
+        st.session_state.pay_jpy_input = 0
+        st.rerun()
+
+if st.session_state.pending_calc:
+    data = st.session_state.pending_calc
+    st.subheader("결제 카드 선택")
+
+    for i, opt in enumerate(data["options"], start=1):
+        with st.container(border=True):
+            st.markdown(f"**{i}위. {opt['card_name']}**")
+            st.write(
+                f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
+                f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
+            )
+            st.caption(
+                f"잔여 횟수: {opt['remaining_uses']} | 총 한도 잔여: {opt['total_remain_text']} | "
+                f"월 혜택 잔여: {opt['monthly_remain_text']} | 근거: {opt['reason']}"
+            )
+
+    labels = [
+        f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
+        for i, o in enumerate(data["options"])
+    ]
+    st.radio(
+        "실제 결제할 카드 선택",
+        options=list(range(len(labels))),
+        format_func=lambda idx: labels[idx],
+        key="selected_option_idx",
+    )
+
+    col_done, col_cancel = st.columns(2)
+    with col_done:
+        if st.button("결제 완료", type="primary", use_container_width=True):
+            chosen = data["options"][st.session_state.selected_option_idx]
+            txns = st.session_state.transactions
+            new_id = f"txn-{len(txns)+1}-{int(dt.datetime.now().timestamp())}"
+            txns.append(
+                Txn(
+                    txn_id=new_id,
+                    txn_date=dt.date.fromisoformat(data["pay_date"]),
+                    card_name=chosen["card_name"],
+                    amount_jpy=int(data["pay_jpy"]),
+                    merchant_type=data["merchant_type"],
+                    status="approved",
+                    memo="결제 완료 버튼으로 추가",
+                )
+            )
+            st.session_state.transactions = txns
+            st.session_state.pending_calc = None
+            st.session_state.selected_option_idx = 0
+            save_app_state(st.session_state.promos, st.session_state.transactions)
+            st.success("결제 내역이 원장에 추가되었습니다.")
+            st.rerun()
+    with col_cancel:
+        if st.button("취소", use_container_width=True):
+            st.session_state.pending_calc = None
+            st.session_state.selected_option_idx = 0
+            st.info("결제 추가 없이 취소되었습니다.")
+            st.rerun()
 
 with st.container(border=True):
     st.subheader("결제내역 원장 (취소관리 포함)")
@@ -492,43 +624,5 @@ with st.container(border=True):
     )
     st.session_state.promos = rows_to_promos(edited_promos)
     save_app_state(st.session_state.promos, st.session_state.transactions)
-
-if calculate_clicked:
-    if not fx_rates:
-        st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
-    elif pay_jpy <= 0:
-        st.warning("결제 금액을 0보다 크게 입력해 주세요.")
-    else:
-        results = []
-        for promo in st.session_state.promos:
-            state = build_state_from_ledger(promo, st.session_state.transactions, fx_rates)
-            reward_jpy, reason, _, _, _, _ = eval_for_payment(
-                promo, int(pay_jpy), pay_date, merchant_type, fx_rates, state
-            )
-            reward_usd = convert(float(reward_jpy), "JPY", "USD", fx_rates)
-            results.append(
-                {
-                    "card_name": promo.card_name,
-                    "reward_jpy": reward_jpy,
-                    "reward_usd": reward_usd,
-                    "reason": reason,
-                    "used_count": state.used_count,
-                }
-            )
-
-        results.sort(key=lambda x: x["reward_jpy"], reverse=True)
-        st.session_state.last_results = results
-        st.session_state.pay_jpy_input = 0
-        st.rerun()
-
-if st.session_state.last_results:
-    results = st.session_state.last_results
-    best = results[0]
-    st.success(f"추천 카드: {best['card_name']} | 예상 혜택 ¥{best['reward_jpy']:,.0f} (약 ${best['reward_usd']:,.2f})")
-    for i, row in enumerate(results, start=1):
-        with st.container(border=True):
-            st.markdown(f"**{i}위. {row['card_name']}**")
-            st.write(f"예상 혜택: ¥{row['reward_jpy']:,.0f} (약 ${row['reward_usd']:,.2f})")
-            st.caption(f"현재 누적 적용 횟수: {row['used_count']} | 근거: {row['reason']}")
 
 st.caption("배포용 참고: Streamlit Community Cloud에서 main 파일을 app.py로 지정하세요.")
