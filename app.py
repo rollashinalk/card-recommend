@@ -394,8 +394,8 @@ def inject_ui_theme() -> None:
 
         .main .block-container {
             max-width: 920px;
-            padding-top: 1.6rem;
-            padding-bottom: 3rem;
+            padding-top: clamp(0.9rem, 1.8vw, 1.6rem);
+            padding-bottom: clamp(1.8rem, 3.5vw, 3rem);
         }
 
         .hero-banner {
@@ -403,14 +403,14 @@ def inject_ui_theme() -> None:
             border-radius: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
             box-shadow: var(--shadow);
-            padding: 0.95rem 1.25rem;
-            margin-bottom: 0.55rem;
+            padding: clamp(0.58rem, 1.6vw, 0.92rem) clamp(0.9rem, 2.2vw, 1.25rem) !important;
+            margin-bottom: clamp(0.3rem, 1vw, 0.55rem) !important;
         }
 
         .hero-banner .eyebrow {
             margin: 0;
             color: #3555cc;
-            font-size: .76rem;
+            font-size: clamp(0.64rem, 0.9vw, 0.76rem);
             font-weight: 700;
             letter-spacing: .08em;
             text-transform: uppercase;
@@ -418,10 +418,10 @@ def inject_ui_theme() -> None:
         }
 
         .hero-banner h1 {
-            margin: .35rem 0;
-            font-size: clamp(1.42rem, 2.2vw, 2rem);
+            margin: 0.18rem 0 !important;
+            font-size: clamp(1.35rem, 4.3vw, 1.95rem) !important;
             letter-spacing: -.02em;
-            line-height: 1.2;
+            line-height: 1.12 !important;
             color: var(--text);
         }
 
@@ -432,9 +432,9 @@ def inject_ui_theme() -> None:
         }
 
         h2 {
-            font-size: clamp(0.98rem, 1.7vw, 1.16rem) !important;
-            line-height: 1.25;
-            margin-bottom: 0.5rem;
+            font-size: clamp(0.98rem, 3vw, 1.22rem) !important;
+            line-height: 1.22 !important;
+            margin-bottom: 0.38rem !important;
         }
 
         /* Streamlit container(border=True) wrappers */
@@ -676,11 +676,22 @@ def inject_ui_theme() -> None:
             height: 1rem;
         }
 
-        @media (max-width: 768px) {
-            .main .block-container { padding-top: 1rem; }
-            .hero-banner { padding: 0.82rem 1rem; margin-bottom: 0.45rem; }
-            .hero-banner h1 { margin: 0.28rem 0; font-size: 1.92rem; }
-            h2 { font-size: 1.42rem !important; }
+        @media screen and (max-width: 1700px) {
+            .main .block-container { padding-top: 0.95rem; }
+            h2 { font-size: clamp(0.96rem, 2.4vw, 1.12rem) !important; }
+        }
+
+        @media screen and (max-width: 1100px) {
+            .main .block-container { padding-top: 0.82rem; }
+            .hero-banner { padding: 0.54rem 0.88rem !important; margin-bottom: 0.32rem !important; }
+            .hero-banner h1 { margin: 0.12rem 0 !important; font-size: clamp(1.24rem, 4.8vw, 1.62rem) !important; }
+            h2 { font-size: clamp(0.92rem, 3.6vw, 1.02rem) !important; margin-bottom: 0.3rem !important; }
+        }
+
+        @media screen and (max-width: 768px) {
+            .hero-banner { padding: 0.48rem 0.78rem !important; }
+            .hero-banner h1 { font-size: clamp(1.14rem, 6.2vw, 1.42rem) !important; }
+            h2 { font-size: clamp(0.86rem, 4.6vw, 0.95rem) !important; }
         }
         </style>
         """,
