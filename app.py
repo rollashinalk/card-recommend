@@ -403,7 +403,7 @@ def inject_ui_theme() -> None:
             border-radius: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
             box-shadow: var(--shadow);
-            padding: clamp(0.58rem, 1.6vw, 0.92rem) clamp(0.9rem, 2.2vw, 1.25rem) !important;
+            padding: clamp(0.78rem, 1.9vw, 1.02rem) clamp(0.9rem, 2.2vw, 1.25rem) !important;
             margin-bottom: clamp(0.3rem, 1vw, 0.55rem) !important;
         }
 
@@ -418,10 +418,10 @@ def inject_ui_theme() -> None:
         }
 
         .hero-banner h1 {
-            margin: 0.18rem 0 !important;
+            margin: 0.08rem 0 0.34rem !important;
             font-size: clamp(1.35rem, 4.3vw, 1.95rem) !important;
             letter-spacing: -.02em;
-            line-height: 1.12 !important;
+            line-height: 1.1 !important;
             color: var(--text);
         }
 
@@ -432,9 +432,9 @@ def inject_ui_theme() -> None:
         }
 
         h2 {
-            font-size: clamp(0.98rem, 3vw, 1.22rem) !important;
+            font-size: clamp(0.88rem, 2.2vw, 1.04rem) !important;
             line-height: 1.22 !important;
-            margin-bottom: 0.38rem !important;
+            margin-bottom: 0.28rem !important;
         }
 
         /* Streamlit container(border=True) wrappers */
@@ -683,15 +683,15 @@ def inject_ui_theme() -> None:
 
         @media screen and (max-width: 1100px) {
             .main .block-container { padding-top: 0.82rem; }
-            .hero-banner { padding: 0.54rem 0.88rem !important; margin-bottom: 0.32rem !important; }
-            .hero-banner h1 { margin: 0.12rem 0 !important; font-size: clamp(1.24rem, 4.8vw, 1.62rem) !important; }
-            h2 { font-size: clamp(0.92rem, 3.6vw, 1.02rem) !important; margin-bottom: 0.3rem !important; }
+            .hero-banner { padding: 0.66rem 0.88rem !important; margin-bottom: 0.28rem !important; }
+            .hero-banner h1 { margin: 0.06rem 0 0.24rem !important; font-size: clamp(1.18rem, 4.2vw, 1.52rem) !important; }
+            h2 { font-size: clamp(0.82rem, 2.9vw, 0.94rem) !important; margin-bottom: 0.24rem !important; }
         }
 
         @media screen and (max-width: 768px) {
             .hero-banner { padding: 0.48rem 0.78rem !important; }
             .hero-banner h1 { font-size: clamp(1.14rem, 6.2vw, 1.42rem) !important; }
-            h2 { font-size: clamp(0.86rem, 4.6vw, 0.95rem) !important; }
+            h2 { font-size: clamp(0.76rem, 3.9vw, 0.88rem) !important; }
         }
         </style>
         """,
