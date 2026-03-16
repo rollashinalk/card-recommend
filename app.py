@@ -563,198 +563,265 @@ def benefit_display_currency(promo: CardPromo) -> str:
     return "JPY"
 
 
-with st.container(border=True):
-    left, right = st.columns([2, 1])
-    with left:
-        st.subheader("실시간 환율")
-    with right:
-        refresh = st.button("환율 새로고침", use_container_width=True)
+tab_reco, tab_promo = st.tabs(["카드 추천", "행사 관리"])
 
-    if refresh or "fx_rates" not in st.session_state:
-        st.session_state.fx_rates = get_fx_rates()
+with tab_reco:
+    with st.container(border=True):
+        left, right = st.columns([2, 1])
+        with left:
+            st.subheader("실시간 환율")
+        with right:
+            refresh = st.button("환율 새로고침", use_container_width=True)
 
-    fx_rates = st.session_state.fx_rates
-    if fx_rates:
-        st.success(f"1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW")
-    else:
-        st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
+        if refresh or "fx_rates" not in st.session_state:
+            st.session_state.fx_rates = get_fx_rates()
 
-with st.container(border=True):
-    st.subheader("결제 정보")
-    if st.session_state.reset_pay_jpy:
-        st.session_state.pay_jpy_input = 0
-        st.session_state.reset_pay_jpy = False
-    merchant_type = st.radio(
-        "가맹점 유형",
-        [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
-        horizontal=True,
-        key="merchant_type_input",
-    )
-    pay_jpy = st.number_input(
-        "결제 금액 (JPY)", min_value=0, step=1000, key="pay_jpy_input", format="%d"
-    )
-    pay_date = st.date_input("결제 날짜", value=dt.date.today())
-    calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
+        fx_rates = st.session_state.fx_rates
+        if fx_rates:
+            st.success(f"1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW")
+        else:
+            st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
-if calculate_clicked:
-    if not fx_rates:
-        st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
-    elif pay_jpy <= 0:
-        st.warning("결제 금액을 0보다 크게 입력해 주세요.")
-    else:
-        options = []
-        for promo in st.session_state.promos:
-            state = build_state_from_ledger(promo, st.session_state.transactions, fx_rates)
-            reward_jpy, reason, _, _, _, _ = eval_for_payment(
-                promo, int(pay_jpy), pay_date, merchant_type, fx_rates, state
-            )
-            display_cur = benefit_display_currency(promo)
-            reward_native = convert(float(reward_jpy), "JPY", display_cur, fx_rates) if reward_jpy > 0 else 0.0
-            remaining_uses = "무제한" if promo.max_uses <= 0 else max(promo.max_uses - state.used_count, 0)
-            total_remain_text = "제한없음"
-            if promo.total_cap_amount > 0:
-                total_remain_jpy = max(
-                    convert(promo.total_cap_amount, promo.total_cap_currency, "JPY", fx_rates) - state.total_used_jpy,
-                    0,
+    with st.container(border=True):
+        st.subheader("결제 정보")
+        if st.session_state.reset_pay_jpy:
+            st.session_state.pay_jpy_input = 0
+            st.session_state.reset_pay_jpy = False
+        merchant_type = st.radio(
+            "가맹점 유형",
+            [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
+            horizontal=True,
+            key="merchant_type_input",
+        )
+        pay_jpy = st.number_input(
+            "결제 금액 (JPY)", min_value=0, step=1000, key="pay_jpy_input", format="%d"
+        )
+        pay_date = st.date_input("결제 날짜", value=dt.date.today())
+        calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
+
+    if calculate_clicked:
+        if not fx_rates:
+            st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
+        elif pay_jpy <= 0:
+            st.warning("결제 금액을 0보다 크게 입력해 주세요.")
+        else:
+            options = []
+            for promo in st.session_state.promos:
+                state = build_state_from_ledger(promo, st.session_state.transactions, fx_rates)
+                reward_jpy, reason, _, _, _, _ = eval_for_payment(
+                    promo, int(pay_jpy), pay_date, merchant_type, fx_rates, state
                 )
-                total_remain_text = format_money(total_remain_jpy, "JPY")
+                display_cur = benefit_display_currency(promo)
+                reward_native = convert(float(reward_jpy), "JPY", display_cur, fx_rates) if reward_jpy > 0 else 0.0
+                remaining_uses = "무제한" if promo.max_uses <= 0 else max(promo.max_uses - state.used_count, 0)
+                total_remain_text = "제한없음"
+                if promo.total_cap_amount > 0:
+                    total_remain_jpy = max(
+                        convert(promo.total_cap_amount, promo.total_cap_currency, "JPY", fx_rates) - state.total_used_jpy,
+                        0,
+                    )
+                    total_remain_text = format_money(total_remain_jpy, "JPY")
 
-            mkey = month_key(pay_date)
-            monthly_remain_text = "제한없음"
-            if promo.monthly_reward_cap_amount > 0:
-                used_r = state.month_reward_used.get(mkey, 0.0)
-                rem_r = max(promo.monthly_reward_cap_amount - used_r, 0)
-                monthly_remain_text = format_money(rem_r, promo.monthly_reward_cap_currency)
+                mkey = month_key(pay_date)
+                monthly_remain_text = "제한없음"
+                if promo.monthly_reward_cap_amount > 0:
+                    used_r = state.month_reward_used.get(mkey, 0.0)
+                    rem_r = max(promo.monthly_reward_cap_amount - used_r, 0)
+                    monthly_remain_text = format_money(rem_r, promo.monthly_reward_cap_currency)
 
-            options.append(
-                {
-                    "card_name": promo.card_name,
-                    "reward_jpy": reward_jpy,
-                    "reward_native": reward_native,
-                    "reward_currency": display_cur,
-                    "reason": reason,
-                    "remaining_uses": remaining_uses,
-                    "total_remain_text": total_remain_text,
-                    "monthly_remain_text": monthly_remain_text,
-                }
-            )
-
-        options.sort(key=lambda x: x["reward_jpy"], reverse=True)
-        st.session_state.pending_calc = {
-            "pay_jpy": int(pay_jpy),
-            "pay_date": pay_date.isoformat(),
-            "merchant_type": merchant_type,
-            "options": options,
-        }
-        st.session_state.selected_option_idx = 0
-        st.session_state.reset_pay_jpy = True
-        st.rerun()
-
-if st.session_state.pending_calc:
-    data = st.session_state.pending_calc
-    st.subheader("결제 카드 선택")
-
-    for i, opt in enumerate(data["options"], start=1):
-        with st.container(border=True):
-            st.markdown(f"**{i}위. {opt['card_name']}**")
-            st.write(
-                f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
-                f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
-            )
-            st.caption(
-                f"잔여 횟수: {opt['remaining_uses']} | 총 한도 잔여: {opt['total_remain_text']} | "
-                f"월 혜택 잔여: {opt['monthly_remain_text']} | 근거: {opt['reason']}"
-            )
-
-    labels = [
-        f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
-        for i, o in enumerate(data["options"])
-    ]
-    st.radio(
-        "실제 결제할 카드 선택",
-        options=list(range(len(labels))),
-        format_func=lambda idx: labels[idx],
-        key="selected_option_idx",
-    )
-
-    col_done, col_cancel = st.columns(2)
-    with col_done:
-        if st.button("결제 완료", type="primary", use_container_width=True):
-            chosen = data["options"][st.session_state.selected_option_idx]
-            txns = st.session_state.transactions
-            new_id = f"txn-{len(txns)+1}-{int(dt.datetime.now().timestamp())}"
-            txns.append(
-                Txn(
-                    txn_id=new_id,
-                    txn_date=dt.date.fromisoformat(data["pay_date"]),
-                    card_name=chosen["card_name"],
-                    amount_jpy=int(data["pay_jpy"]),
-                    merchant_type=data["merchant_type"],
-                    status="approved",
-                    memo="결제 완료 버튼으로 추가",
+                options.append(
+                    {
+                        "card_name": promo.card_name,
+                        "reward_jpy": reward_jpy,
+                        "reward_native": reward_native,
+                        "reward_currency": display_cur,
+                        "reason": reason,
+                        "remaining_uses": remaining_uses,
+                        "total_remain_text": total_remain_text,
+                        "monthly_remain_text": monthly_remain_text,
+                    }
                 )
-            )
-            st.session_state.transactions = txns
-            st.session_state.pending_calc = None
-            save_app_state(st.session_state.promos, st.session_state.transactions)
-            st.success("결제 내역이 원장에 추가되었습니다.")
-            st.rerun()
-    with col_cancel:
-        if st.button("취소", use_container_width=True):
-            st.session_state.pending_calc = None
-            st.info("결제 추가 없이 취소되었습니다.")
+
+            options.sort(key=lambda x: x["reward_jpy"], reverse=True)
+            st.session_state.pending_calc = {
+                "pay_jpy": int(pay_jpy),
+                "pay_date": pay_date.isoformat(),
+                "merchant_type": merchant_type,
+                "options": options,
+            }
+            st.session_state.selected_option_idx = 0
+            st.session_state.reset_pay_jpy = True
             st.rerun()
 
-with st.container(border=True):
-    st.subheader("결제내역 원장 (취소관리 포함)")
-    st.caption("status가 cancelled인 건은 누적 혜택 계산에서 자동 제외됩니다.")
-    card_names = sorted({p.card_name for p in st.session_state.promos})
-    edited_txns = st.data_editor(
-        txn_rows(st.session_state.transactions),
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "txn_date": st.column_config.DateColumn(),
-            "card_name": st.column_config.SelectboxColumn(options=card_names),
-            "amount_jpy": st.column_config.NumberColumn(min_value=0, step=1000),
-            "merchant_type": st.column_config.SelectboxColumn(options=[MERCHANT_NORMAL, MERCHANT_KB_CVS3]),
-            "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
-        },
-    )
-    st.session_state.transactions = rows_to_txns(edited_txns)
-    save_app_state(st.session_state.promos, st.session_state.transactions)
+    if st.session_state.pending_calc:
+        data = st.session_state.pending_calc
+        st.subheader("결제 카드 선택")
 
-    if st.button("원장 초기화", type="secondary"):
-        st.session_state.transactions = []
+        for i, opt in enumerate(data["options"], start=1):
+            with st.container(border=True):
+                st.markdown(f"**{i}위. {opt['card_name']}**")
+                st.write(
+                    f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
+                    f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
+                )
+                st.caption(
+                    f"잔여 횟수: {opt['remaining_uses']} | 총 한도 잔여: {opt['total_remain_text']} | "
+                    f"월 혜택 잔여: {opt['monthly_remain_text']} | 근거: {opt['reason']}"
+                )
+
+        labels = [
+            f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
+            for i, o in enumerate(data["options"])
+        ]
+        st.radio(
+            "실제 결제할 카드 선택",
+            options=list(range(len(labels))),
+            format_func=lambda idx: labels[idx],
+            key="selected_option_idx",
+        )
+
+        col_done, col_cancel = st.columns(2)
+        with col_done:
+            if st.button("결제 완료", type="primary", use_container_width=True):
+                chosen = data["options"][st.session_state.selected_option_idx]
+                txns = st.session_state.transactions
+                new_id = f"txn-{len(txns)+1}-{int(dt.datetime.now().timestamp())}"
+                txns.append(
+                    Txn(
+                        txn_id=new_id,
+                        txn_date=dt.date.fromisoformat(data["pay_date"]),
+                        card_name=chosen["card_name"],
+                        amount_jpy=int(data["pay_jpy"]),
+                        merchant_type=data["merchant_type"],
+                        status="approved",
+                        memo="결제 완료 버튼으로 추가",
+                    )
+                )
+                st.session_state.transactions = txns
+                st.session_state.pending_calc = None
+                save_app_state(st.session_state.promos, st.session_state.transactions)
+                st.success("결제 내역이 원장에 추가되었습니다.")
+                st.rerun()
+        with col_cancel:
+            if st.button("취소", use_container_width=True):
+                st.session_state.pending_calc = None
+                st.info("결제 추가 없이 취소되었습니다.")
+                st.rerun()
+
+    with st.container(border=True):
+        st.subheader("결제내역 원장 (취소관리 포함)")
+        st.caption("status가 cancelled인 건은 누적 혜택 계산에서 자동 제외됩니다.")
+        card_names = sorted({p.card_name for p in st.session_state.promos})
+        edited_txns = st.data_editor(
+            txn_rows(st.session_state.transactions),
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "txn_date": st.column_config.DateColumn(),
+                "card_name": st.column_config.SelectboxColumn(options=card_names),
+                "amount_jpy": st.column_config.NumberColumn(min_value=0, step=1000),
+                "merchant_type": st.column_config.SelectboxColumn(options=[MERCHANT_NORMAL, MERCHANT_KB_CVS3]),
+                "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
+            },
+        )
+        st.session_state.transactions = rows_to_txns(edited_txns)
         save_app_state(st.session_state.promos, st.session_state.transactions)
-        st.rerun()
 
-with st.container(border=True):
-    st.subheader("행사 리스트")
-    uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
-    if uploaded_csv is not None:
-        try:
-            st.session_state.promos = load_promos_from_csv(uploaded_csv)
+        if st.button("원장 초기화", type="secondary"):
+            st.session_state.transactions = []
             save_app_state(st.session_state.promos, st.session_state.transactions)
-            st.success("CSV를 불러왔습니다.")
-        except Exception as exc:
-            st.error(f"CSV 파싱 실패: {exc}")
+            st.rerun()
 
-    edited_promos = st.data_editor(
-        promo_rows(st.session_state.promos),
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "reward_type": st.column_config.SelectboxColumn(options=["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"]),
-            "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "monthly_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "monthly_reward_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
-        },
-    )
-    st.session_state.promos = rows_to_promos(edited_promos)
-    save_app_state(st.session_state.promos, st.session_state.transactions)
+with tab_promo:
+    with st.container(border=True):
+        st.subheader("행사 관리")
+        st.caption("간단 추가 폼 또는 표 편집으로 행사를 관리할 수 있습니다.")
+
+        with st.form("promo_add_form", clear_on_submit=True):
+            c1, c2 = st.columns(2)
+            with c1:
+                card_name = st.text_input("대상 카드", placeholder="예: KB UPI (가온 체크)")
+                reward_type = st.selectbox(
+                    "혜택 유형",
+                    ["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"],
+                )
+                start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
+                end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
+                min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
+                min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
+            with c2:
+                percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
+                fixed_amount = st.number_input("정액 혜택", min_value=0.0, step=100.0, value=0.0)
+                max_reward_per_txn = st.number_input("건당 최대 혜택", min_value=0.0, step=100.0, value=0.0)
+                max_reward_cur = st.selectbox("건당 최대 혜택 통화", SUPPORTED_CURRENCIES, index=0)
+                max_uses = st.number_input("최대 사용 횟수", min_value=0, step=1, value=0)
+                merchant_type = st.selectbox("가맹점 유형", ["all", "kb_cvs3"])
+
+            submitted = st.form_submit_button("행사 추가", type="primary", use_container_width=True)
+
+            if submitted:
+                if not card_name.strip():
+                    st.warning("대상 카드명을 입력해 주세요.")
+                else:
+                    new_promo = CardPromo(
+                        card_name=card_name.strip(),
+                        enabled=True,
+                        reward_type=reward_type,
+                        start_date=start_date,
+                        end_date=end_date,
+                        min_amount=float(min_amount),
+                        min_currency=min_currency,
+                        percent_value=float(percent_value),
+                        fixed_amount=float(fixed_amount),
+                        max_reward_per_txn=float(max_reward_per_txn),
+                        max_reward_per_txn_currency=max_reward_cur,
+                        max_uses=int(max_uses),
+                        used_count=0,
+                        total_cap_amount=0.0,
+                        total_cap_currency="JPY",
+                        total_used_amount=0.0,
+                        monthly_spend_cap_amount=0.0,
+                        monthly_spend_cap_currency="KRW",
+                        monthly_spend_used_amount=0.0,
+                        monthly_reward_cap_amount=0.0,
+                        monthly_reward_cap_currency="KRW",
+                        monthly_reward_used_amount=0.0,
+                        merchant_type=merchant_type,
+                        formula_id="shinhan_the_more_v1" if reward_type == "formula_cashback" else "",
+                        formula_params_json="",
+                    )
+                    st.session_state.promos.append(new_promo)
+                    save_app_state(st.session_state.promos, st.session_state.transactions)
+                    st.success("행사가 추가되었습니다.")
+                    st.rerun()
+
+    with st.container(border=True):
+        st.subheader("행사 리스트")
+        uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
+        if uploaded_csv is not None:
+            try:
+                st.session_state.promos = load_promos_from_csv(uploaded_csv)
+                save_app_state(st.session_state.promos, st.session_state.transactions)
+                st.success("CSV를 불러왔습니다.")
+            except Exception as exc:
+                st.error(f"CSV 파싱 실패: {exc}")
+
+        edited_promos = st.data_editor(
+            promo_rows(st.session_state.promos),
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "reward_type": st.column_config.SelectboxColumn(options=["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"]),
+                "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "monthly_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "monthly_reward_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
+            },
+        )
+        st.session_state.promos = rows_to_promos(edited_promos)
+        save_app_state(st.session_state.promos, st.session_state.transactions)
 
 st.caption("배포용 참고: Streamlit Community Cloud에서 main 파일을 app.py로 지정하세요.")
+
