@@ -119,7 +119,11 @@ def calc_formula_cashback(pay_krw: int, formula_id: str, formula_params_json: st
     if formula_id != "shinhan_the_more_v1":
         return 0.0
 
-    return float((pay_krw % 1000) * 2)
+    # 신한 더모아 v1 규칙:
+    # - KRW 환산 결제금액 기준으로 (amount % 1000) * 2 를 캐시백으로 계산
+    # - 예시: 5,999원 -> 1,998원
+    krw_amount = int(pay_krw)
+    return float((krw_amount % 1000) * 2)
 
 
 def recalc_promo_usage(
