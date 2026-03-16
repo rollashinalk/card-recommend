@@ -505,6 +505,16 @@ def inject_ui_theme() -> None:
             overflow: hidden;
         }
 
+        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
+            margin-bottom: 0.9rem;
+        }
+
+        .compact-meta {
+            color: var(--muted);
+            font-size: 0.83rem;
+            line-height: 1.4;
+        }
+
         @media (max-width: 768px) {
             .main .block-container { padding-top: 1rem; }
             .hero-banner { padding: 1rem; }
@@ -556,9 +566,8 @@ inject_ui_theme()
 st.markdown(
     """
     <div class="hero-banner">
-      <p class="eyebrow">Card Optimizer</p>
-      <h1>💳 일본 결제 카드 추천</h1>
-      <p>결제내역 원장 기반으로 혜택 누적/취소 반영을 자동 계산합니다.</p>
+      <p class="eyebrow">💳 Card Optimizer</p>
+      <h1>일본 결제 카드 추천</h1>
     </div>
     """,
     unsafe_allow_html=True,
@@ -598,13 +607,13 @@ def benefit_display_currency(promo: CardPromo) -> str:
     return "JPY"
 
 
-tab_reco, tab_promo = st.tabs(["카드 추천", "행사 관리"])
+tab_reco, tab_promo = st.tabs(["💳 카드 추천", "🏪 행사 관리"])
 
 with tab_reco:
     with st.container(border=True):
         left, right = st.columns([2, 1])
         with left:
-            st.subheader("실시간 환율")
+            st.subheader("💱 실시간 환율")
         with right:
             refresh = st.button("환율 새로고침", use_container_width=True)
 
@@ -618,7 +627,7 @@ with tab_reco:
             st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
     with st.container(border=True):
-        st.subheader("결제 정보")
+        st.subheader("💴 결제 정보")
         if st.session_state.reset_pay_jpy:
             st.session_state.pay_jpy_input = 0
             st.session_state.reset_pay_jpy = False
@@ -690,7 +699,7 @@ with tab_reco:
 
     if st.session_state.pending_calc:
         data = st.session_state.pending_calc
-        st.subheader("결제 카드 선택")
+        st.subheader("🔍 결제 카드 선택")
 
         for i, opt in enumerate(data["options"], start=1):
             with st.container(border=True):
@@ -699,9 +708,9 @@ with tab_reco:
                     f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
                     f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
                 )
-                st.caption(
-                    f"잔여 횟수: {opt['remaining_uses']} | 총 한도 잔여: {opt['total_remain_text']} | "
-                    f"월 혜택 잔여: {opt['monthly_remain_text']} | 근거: {opt['reason']}"
+                st.markdown(
+                    f"<span class='compact-meta'>잔여 {opt['remaining_uses']} · 총한도 {opt['total_remain_text']} · 월한도 {opt['monthly_remain_text']}</span>",
+                    unsafe_allow_html=True,
                 )
 
         labels = [
@@ -744,8 +753,7 @@ with tab_reco:
                 st.rerun()
 
     with st.container(border=True):
-        st.subheader("결제내역 원장 (취소관리 포함)")
-        st.caption("status가 cancelled인 건은 누적 혜택 계산에서 자동 제외됩니다.")
+        st.subheader("📒 결제내역 원장")
         card_names = sorted({p.card_name for p in st.session_state.promos})
         edited_txns = st.data_editor(
             txn_rows(st.session_state.transactions),
@@ -769,8 +777,7 @@ with tab_reco:
 
 with tab_promo:
     with st.container(border=True):
-        st.subheader("행사 관리")
-        st.caption("간단 추가 폼 또는 표 편집으로 행사를 관리할 수 있습니다.")
+        st.subheader("🏪 행사 관리")
 
         with st.form("promo_add_form", clear_on_submit=True):
             c1, c2 = st.columns(2)
@@ -831,7 +838,7 @@ with tab_promo:
                     st.rerun()
 
     with st.container(border=True):
-        st.subheader("행사 리스트")
+        st.subheader("📒 행사 리스트")
         uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
         if uploaded_csv is not None:
             try:
@@ -858,5 +865,4 @@ with tab_promo:
         st.session_state.promos = rows_to_promos(edited_promos)
         save_app_state(st.session_state.promos, st.session_state.transactions)
 
-st.caption("배포용 참고: Streamlit Community Cloud에서 main 파일을 app.py로 지정하세요.")
 
