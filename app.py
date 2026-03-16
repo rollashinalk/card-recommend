@@ -559,10 +559,11 @@ def inject_ui_theme() -> None:
             height: 2px !important;
         }
 
-        div[data-testid="stAlert"] {
+        div[data-testid="stAlert"],
+        div[data-baseweb="notification"] {
             border-radius: 12px;
             border: none !important;
-            background: rgba(247, 249, 255, 0.92);
+            background: rgba(255, 255, 255, 0.56) !important;
             box-shadow: none !important;
         }
 
@@ -622,18 +623,25 @@ def inject_ui_theme() -> None:
             color: var(--text);
         }
 
-        /* 결제카드 선택 라디오 영역만 박스 처리 (다른 라디오는 영향 없음) */
-        .choice-title + div[data-testid="stRadio"] {
+        /* 결제카드 선택 라디오 영역만 박스 처리 (selected_option_idx key) */
+        div[data-testid="stRadio"]:has(input[name="selected_option_idx"]) {
             background: rgba(255,255,255,0.56);
             border-radius: 16px;
             padding: 0.65rem 0.55rem 0.35rem;
         }
 
-        .choice-title + div[data-testid="stRadio"] label {
+        div[data-testid="stRadio"]:has(input[name="selected_option_idx"]) label {
             background: transparent !important;
             border-radius: 0;
             padding: 0.22rem 0.2rem;
             margin-bottom: 0.25rem;
+        }
+
+        /* 가맹점 유형 라디오는 배경 제거 */
+        div[data-testid="stRadio"]:has(input[name="merchant_type_input"]) {
+            background: transparent !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
         }
 
         .section-spacer {
