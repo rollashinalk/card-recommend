@@ -515,6 +515,7 @@ def inject_ui_theme() -> None:
         [data-testid="stFormSubmitButton"] > button,
         [data-testid="stFormSubmitButton"] > button[kind="primary"] {
             color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
             background: linear-gradient(180deg, #4d75ff 0%, #355ff3 100%) !important;
             border-color: #355ff3 !important;
         }
@@ -591,6 +592,41 @@ def inject_ui_theme() -> None:
 
         .rank-medal {
             margin-right: 0.35rem;
+        }
+
+        .rank-card {
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+            margin: 0.2rem 0;
+        }
+
+        .rank-card-1 { background: rgba(79, 120, 255, 0.12); }
+        .rank-card-2 { background: rgba(128, 92, 255, 0.10); }
+        .rank-card-3 { background: rgba(66, 182, 175, 0.12); }
+        .rank-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+        .rank-benefit {
+            font-size: 0.98rem;
+            margin-bottom: 0.3rem;
+            color: #1f2937;
+        }
+
+        .choice-title {
+            font-size: 1.28rem;
+            font-weight: 700;
+            margin: 0.25rem 0 0.45rem;
+            color: var(--text);
+        }
+
+        div[data-testid="stRadio"] label {
+            background: rgba(255,255,255,0.56);
+            border-radius: 12px;
+            padding: 0.42rem 0.55rem;
+            margin-bottom: 0.35rem;
         }
 
         .section-spacer {
@@ -796,13 +832,16 @@ with tab_reco:
         for i, opt in enumerate(data["options"], start=1):
             with st.container():
                 medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
-                st.markdown(f"**<span class='rank-medal'>{medal}</span>{i}위. {opt['card_name']}**", unsafe_allow_html=True)
-                st.write(
-                    f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
-                    f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
-                )
+                rank_cls = f" rank-card rank-card-{i}" if i <= 3 else ""
                 st.markdown(
-                    f"<span class='compact-meta'>잔여 {opt['remaining_uses']} · 총한도 {opt['total_remain_text']} · 월한도 {opt['monthly_remain_text']}</span>",
+                    (
+                        f"<div class='{rank_cls.strip()}'>"
+                        f"<div class='rank-title'><span class='rank-medal'>{medal}</span>{i}위. {opt['card_name']}</div>"
+                        f"<div class='rank-benefit'>예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
+                        f"(비교기준 JPY {opt['reward_jpy']:,.0f})</div>"
+                        f"<div class='compact-meta'>잔여 {opt['remaining_uses']} · 총한도 {opt['total_remain_text']} · 월한도 {opt['monthly_remain_text']}</div>"
+                        f"</div>"
+                    ),
                     unsafe_allow_html=True,
                 )
 
@@ -810,11 +849,13 @@ with tab_reco:
             f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
             for i, o in enumerate(data["options"])
         ]
+        st.markdown("<div class='choice-title'>✔️ 실제 결제할 카드 선택</div>", unsafe_allow_html=True)
         st.radio(
-            "실제 결제할 카드 선택",
+            "카드 선택",
             options=list(range(len(labels))),
             format_func=lambda idx: labels[idx],
             key="selected_option_idx",
+            label_visibility="collapsed",
         )
 
         col_done, col_cancel = st.columns(2)
@@ -848,7 +889,7 @@ with tab_reco:
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
     with st.container():
-        st.subheader("📒 결제내역 원장")
+        st.subheader("📒 결제내역")
         card_names = sorted({p.card_name for p in st.session_state.promos})
         edited_txns = st.data_editor(
             txn_rows(st.session_state.transactions),
@@ -865,7 +906,7 @@ with tab_reco:
         st.session_state.transactions = rows_to_txns(edited_txns)
         save_app_state(st.session_state.promos, st.session_state.transactions)
 
-        if st.button("원장 초기화", type="secondary"):
+        if st.button("초기화", type="secondary"):
             st.session_state.transactions = []
             save_app_state(st.session_state.promos, st.session_state.transactions)
             st.rerun()
