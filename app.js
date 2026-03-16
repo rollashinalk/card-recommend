@@ -49,7 +49,13 @@ function withDefaultPromotions(seed) {
       maxDiscount: 2000,
       maxCurrency: "JPY",
       maxUses: 5,
-      usedCount: 0
+      usedCount: 0,
+      totalLimit: 5000,
+      totalLimitCurrency: "JPY",
+      totalUsed: 0,
+      monthlyLimit: 2000,
+      monthlyLimitCurrency: "JPY",
+      monthlyUsed: 0
     });
   }
 
@@ -68,7 +74,13 @@ function withDefaultPromotions(seed) {
       maxDiscount: 10,
       maxCurrency: "USD",
       maxUses: 3,
-      usedCount: 0
+      usedCount: 0,
+      totalLimit: 30,
+      totalLimitCurrency: "USD",
+      totalUsed: 0,
+      monthlyLimit: 20,
+      monthlyLimitCurrency: "USD",
+      monthlyUsed: 0
     });
   }
 
@@ -108,6 +120,12 @@ const els = {
   promoMaxCurrency: document.getElementById("promoMaxCurrency"),
   promoMaxUses: document.getElementById("promoMaxUses"),
   promoUsedCount: document.getElementById("promoUsedCount"),
+  promoTotalLimit: document.getElementById("promoTotalLimit"),
+  promoTotalLimitCurrency: document.getElementById("promoTotalLimitCurrency"),
+  promoTotalUsed: document.getElementById("promoTotalUsed"),
+  promoMonthlyLimit: document.getElementById("promoMonthlyLimit"),
+  promoMonthlyLimitCurrency: document.getElementById("promoMonthlyLimitCurrency"),
+  promoMonthlyUsed: document.getElementById("promoMonthlyUsed"),
   promoList: document.getElementById("promoList")
 };
 
@@ -205,6 +223,7 @@ function renderPromotions() {
       </div>
       <p class="small">최소 ${promo.minAmount} ${promo.minCurrency} / 할인 ${promo.discountPercent}% (최대 ${promo.maxDiscount} ${promo.maxCurrency})</p>
       <p class="small">횟수 ${promo.usedCount}/${promo.maxUses}회 사용</p>
+      <p class="small">총한도 ${promo.totalLimit ? `${promo.totalUsed ?? 0}/${promo.totalLimit} ${promo.totalLimitCurrency ?? promo.maxCurrency}` : "제한 없음"} / 월한도 ${promo.monthlyLimit ? `${promo.monthlyUsed ?? 0}/${promo.monthlyLimit} ${promo.monthlyLimitCurrency ?? promo.maxCurrency}` : "제한 없음"}</p>
       <div class="actions">
         <button type="button" data-action="use" data-id="${promo.id}">1회 사용 +</button>
         <button type="button" class="danger" data-action="delete" data-id="${promo.id}">삭제</button>
@@ -251,7 +270,13 @@ function addPromotionFromForm(event) {
     maxDiscount: Number(els.promoMaxDiscount.value),
     maxCurrency: els.promoMaxCurrency.value,
     maxUses: Number(els.promoMaxUses.value),
-    usedCount: Number(els.promoUsedCount.value)
+    usedCount: Number(els.promoUsedCount.value),
+    totalLimit: els.promoTotalLimit.value ? Number(els.promoTotalLimit.value) : null,
+    totalLimitCurrency: els.promoTotalLimitCurrency.value,
+    totalUsed: Number(els.promoTotalUsed.value || 0),
+    monthlyLimit: els.promoMonthlyLimit.value ? Number(els.promoMonthlyLimit.value) : null,
+    monthlyLimitCurrency: els.promoMonthlyLimitCurrency.value,
+    monthlyUsed: Number(els.promoMonthlyUsed.value || 0)
   };
 
   state.promotions.push(newPromo);
@@ -261,63 +286,138 @@ function addPromotionFromForm(event) {
   els.promoCountry.value = "JP";
   els.promoChannel.value = "offline";
   els.promoUsedCount.value = "0";
+  els.promoTotalLimit.value = "";
+  els.promoTotalLimitCurrency.value = "JPY";
+  els.promoTotalUsed.value = "0";
+  els.promoMonthlyLimit.value = "";
+  els.promoMonthlyLimitCurrency.value = "JPY";
+  els.promoMonthlyUsed.value = "0";
 }
 
 function evaluatePromotion(promo, payment) {
-  const reasons = [];
+  const base = {
+    eligibility: { ok: false, reason: "" },
+    cap_before: {
+      remaining_uses: Math.max((promo.maxUses ?? 0) - (promo.usedCount ?? 0), 0),
+      remaining_total_limit: null,
+      remaining_monthly_limit: null
+    },
+    cap_after: {
+      remaining_uses: Math.max((promo.maxUses ?? 0) - (promo.usedCount ?? 0), 0),
+      remaining_total_limit: null,
+      remaining_monthly_limit: null
+    },
+    discountJpy: 0,
+    discountUsd: NaN
+  };
+
+  const totalLimitCurrency = promo.totalLimitCurrency ?? promo.maxCurrency;
+  const monthlyLimitCurrency = promo.monthlyLimitCurrency ?? promo.maxCurrency;
+
+  if (promo.totalLimit != null && promo.totalLimit !== "") {
+    const remainingTotal = Math.max((promo.totalLimit ?? 0) - (promo.totalUsed ?? 0), 0);
+    base.cap_before.remaining_total_limit = { amount: remainingTotal, currency: totalLimitCurrency };
+    base.cap_after.remaining_total_limit = { amount: remainingTotal, currency: totalLimitCurrency };
+  }
+
+  if (promo.monthlyLimit != null && promo.monthlyLimit !== "") {
+    const remainingMonthly = Math.max((promo.monthlyLimit ?? 0) - (promo.monthlyUsed ?? 0), 0);
+    base.cap_before.remaining_monthly_limit = { amount: remainingMonthly, currency: monthlyLimitCurrency };
+    base.cap_after.remaining_monthly_limit = { amount: remainingMonthly, currency: monthlyLimitCurrency };
+  }
 
   if (payment.date < promo.startDate || payment.date > promo.endDate) {
-    reasons.push("행사 기간 아님");
-    return { ok: false, reasons, discountJpy: 0 };
+    return { ...base, eligibility: { ok: false, reason: "기간 조건 불충족" } };
   }
-
   if (payment.country !== promo.country) {
-    reasons.push("국가 조건 불일치");
-    return { ok: false, reasons, discountJpy: 0 };
+    return { ...base, eligibility: { ok: false, reason: "국가 조건 불일치" } };
   }
-
   if (promo.channel !== "both" && payment.channel !== promo.channel) {
-    reasons.push("결제 방식 조건 불일치");
-    return { ok: false, reasons, discountJpy: 0 };
+    return { ...base, eligibility: { ok: false, reason: "결제 방식 조건 불일치" } };
+  }
+  if ((promo.usedCount ?? 0) >= (promo.maxUses ?? 0)) {
+    return { ...base, eligibility: { ok: false, reason: "횟수 한도 소진" } };
   }
 
-  if (promo.usedCount >= promo.maxUses) {
-    reasons.push("사용 횟수 소진");
-    return { ok: false, reasons, discountJpy: 0 };
-  }
-
-  const paymentInPromoCurrency = promo.minCurrency === "JPY"
-    ? payment.jpy
-    : toUsd(payment.jpy, "JPY");
-
+  const paymentInPromoCurrency = promo.minCurrency === "JPY" ? payment.jpy : toUsd(payment.jpy, "JPY");
   if (!Number.isFinite(paymentInPromoCurrency)) {
-    reasons.push("환율 정보 없음");
-    return { ok: false, reasons, discountJpy: 0 };
+    return { ...base, eligibility: { ok: false, reason: "환율 정보 없음" } };
   }
-
   if (paymentInPromoCurrency < promo.minAmount) {
-    reasons.push(`최소 결제 금액 미달 (${promo.minAmount} ${promo.minCurrency})`);
-    return { ok: false, reasons, discountJpy: 0 };
+    return { ...base, eligibility: { ok: false, reason: `최소 결제 금액 미달 (${promo.minAmount} ${promo.minCurrency})` } };
   }
 
   const rawDiscountJpy = payment.jpy * (promo.discountPercent / 100);
   const maxDiscountJpy = toJpy(promo.maxDiscount, promo.maxCurrency);
-
   if (!Number.isFinite(maxDiscountJpy)) {
-    reasons.push("할인 한도 환산 실패");
-    return { ok: false, reasons, discountJpy: 0 };
+    return { ...base, eligibility: { ok: false, reason: "할인 한도 환산 실패" } };
   }
 
-  const discountJpy = Math.min(rawDiscountJpy, maxDiscountJpy);
+  let discountJpy = Math.min(rawDiscountJpy, maxDiscountJpy);
+
+  if (base.cap_before.remaining_total_limit) {
+    const remainJpy = toJpy(base.cap_before.remaining_total_limit.amount, base.cap_before.remaining_total_limit.currency);
+    if (!Number.isFinite(remainJpy)) {
+      return { ...base, eligibility: { ok: false, reason: "총한도 환산 실패" } };
+    }
+    if (remainJpy <= 0) {
+      return { ...base, eligibility: { ok: false, reason: "총한도 소진" } };
+    }
+    discountJpy = Math.min(discountJpy, remainJpy);
+  }
+
+  if (base.cap_before.remaining_monthly_limit) {
+    const remainJpy = toJpy(base.cap_before.remaining_monthly_limit.amount, base.cap_before.remaining_monthly_limit.currency);
+    if (!Number.isFinite(remainJpy)) {
+      return { ...base, eligibility: { ok: false, reason: "월한도 환산 실패" } };
+    }
+    if (remainJpy <= 0) {
+      return { ...base, eligibility: { ok: false, reason: "월한도 소진" } };
+    }
+    discountJpy = Math.min(discountJpy, remainJpy);
+  }
+
+  base.cap_after.remaining_uses = Math.max(base.cap_before.remaining_uses - 1, 0);
+
+  if (base.cap_before.remaining_total_limit) {
+    const discountInTotalCurrency = base.cap_before.remaining_total_limit.currency === "JPY"
+      ? discountJpy
+      : toUsd(discountJpy, "JPY");
+    base.cap_after.remaining_total_limit = {
+      ...base.cap_before.remaining_total_limit,
+      amount: Math.max(base.cap_before.remaining_total_limit.amount - discountInTotalCurrency, 0)
+    };
+  }
+
+  if (base.cap_before.remaining_monthly_limit) {
+    const discountInMonthlyCurrency = base.cap_before.remaining_monthly_limit.currency === "JPY"
+      ? discountJpy
+      : toUsd(discountJpy, "JPY");
+    base.cap_after.remaining_monthly_limit = {
+      ...base.cap_before.remaining_monthly_limit,
+      amount: Math.max(base.cap_before.remaining_monthly_limit.amount - discountInMonthlyCurrency, 0)
+    };
+  }
+
   return {
-    ok: true,
-    reasons: [
-      `할인율 ${promo.discountPercent}% 적용`,
-      `건당 최대 ${promo.maxDiscount} ${promo.maxCurrency}`
-    ],
+    ...base,
+    eligibility: { ok: true, reason: "적용 가능" },
     discountJpy,
     discountUsd: toUsd(discountJpy, "JPY")
   };
+}
+
+function formatRemainingLimit(limitInfo) {
+  if (!limitInfo) return "제한 없음";
+  return `${formatMoney(limitInfo.amount, limitInfo.currency)}`;
+}
+
+function formatCapState(cap) {
+  if (!cap || cap.remaining_uses == null) {
+    return "정보 없음";
+  }
+
+  return `남은 횟수 ${cap.remaining_uses}회 / 남은 총한도 ${formatRemainingLimit(cap.remaining_total_limit)} / 남은 월한도 ${formatRemainingLimit(cap.remaining_monthly_limit)}`;
 }
 
 function calculateBestCard() {
@@ -348,16 +448,28 @@ function calculateBestCard() {
 
   for (const card of activeCards) {
     const promos = state.promotions.filter((p) => p.cardId === card.id);
-    let best = { discountJpy: 0, reasons: ["적용 가능한 행사 없음"] };
+    let best = {
+      discountJpy: 0,
+      discountUsd: NaN,
+      promoName: null,
+      eligibility: { ok: false, reason: "적용 가능한 행사 없음" },
+      cap_before: { remaining_uses: null, remaining_total_limit: null, remaining_monthly_limit: null },
+      cap_after: { remaining_uses: null, remaining_total_limit: null, remaining_monthly_limit: null }
+    };
 
     for (const promo of promos) {
       const result = evaluatePromotion(promo, payment);
-      if (result.ok && result.discountJpy > best.discountJpy) {
+      if (result.eligibility.ok && result.discountJpy >= best.discountJpy) {
         best = {
           discountJpy: result.discountJpy,
           discountUsd: result.discountUsd,
-          reasons: [promo.name, ...result.reasons]
+          promoName: promo.name,
+          eligibility: result.eligibility,
+          cap_before: result.cap_before,
+          cap_after: result.cap_after
         };
+      } else if (!best.eligibility.ok && !result.eligibility.ok) {
+        best = { ...best, eligibility: result.eligibility };
       }
     }
 
@@ -378,7 +490,10 @@ function calculateBestCard() {
           <h3>${rank}위: ${row.card.name}</h3>
           <p>예상 할인: <strong>${saveJpy}${saveUsd}</strong></p>
           <p>예상 결제액: <strong>${expectedPay}</strong></p>
-          <p class="small">근거: ${row.reasons.join(" · ")}</p>
+          <p class="small">적용 행사: ${row.promoName ?? "없음"}</p>
+          <p class="small">eligibility: ${row.eligibility.ok ? "적용 가능" : `적용 불가 (${row.eligibility.reason})`}</p>
+          <p class="small">cap_before: ${formatCapState(row.cap_before)}</p>
+          <p class="small">cap_after: ${formatCapState(row.cap_after)}</p>
         </div>
       `;
     })

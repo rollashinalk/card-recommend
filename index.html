@@ -121,6 +121,36 @@
             현재 사용 횟수
             <input type="number" id="promoUsedCount" min="0" step="1" value="0" required />
           </label>
+          <label>
+            총 할인 한도
+            <input type="number" id="promoTotalLimit" min="0" step="0.01" placeholder="미입력 시 제한 없음" />
+          </label>
+          <label>
+            총 한도 통화
+            <select id="promoTotalLimitCurrency">
+              <option value="JPY">JPY</option>
+              <option value="USD">USD</option>
+            </select>
+          </label>
+          <label>
+            누적 할인 사용액
+            <input type="number" id="promoTotalUsed" min="0" step="0.01" value="0" />
+          </label>
+          <label>
+            월 할인 한도
+            <input type="number" id="promoMonthlyLimit" min="0" step="0.01" placeholder="미입력 시 제한 없음" />
+          </label>
+          <label>
+            월 한도 통화
+            <select id="promoMonthlyLimitCurrency">
+              <option value="JPY">JPY</option>
+              <option value="USD">USD</option>
+            </select>
+          </label>
+          <label>
+            당월 할인 사용액
+            <input type="number" id="promoMonthlyUsed" min="0" step="0.01" value="0" />
+          </label>
         </form>
         <button form="promoForm" type="submit" id="addPromoBtn">행사 추가</button>
         <div id="promoList"></div>
