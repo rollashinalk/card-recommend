@@ -598,9 +598,11 @@ def inject_ui_theme() -> None:
         .rank-card {
             border-radius: 14px;
             padding: 0.9rem 1rem;
-            margin: 0.2rem 0;
+            margin: 0.38rem 0;
+            width: 100%;
         }
 
+        .rank-card-plain { background: transparent; }
         .rank-card-1 { background: rgba(79, 120, 255, 0.12); }
         .rank-card-2 { background: rgba(128, 92, 255, 0.10); }
         .rank-card-3 { background: rgba(66, 182, 175, 0.12); }
@@ -616,13 +618,6 @@ def inject_ui_theme() -> None:
             color: #1f2937;
         }
 
-        .choice-title {
-            font-size: 1.28rem;
-            font-weight: 700;
-            margin: 1rem 0 0.55rem;
-            color: var(--text);
-        }
-
         /* 기본 라디오는 배경 없음 */
         div[data-testid="stRadio"] {
             background: transparent !important;
@@ -630,11 +625,19 @@ def inject_ui_theme() -> None:
             border-radius: 0 !important;
         }
 
-        /* 결제카드 선택 라디오(key=selected_option_idx)만 통합 박스 적용 */
+        /* 결제카드 선택 라디오(key=selected_option_idx): 타이틀+옵션을 하나의 박스로 */
         .st-key-selected_option_idx div[data-testid="stRadio"] {
             background: rgba(255,255,255,0.56) !important;
             border-radius: 16px;
-            padding: 0.65rem 0.55rem 0.35rem !important;
+            padding: 0.85rem 0.75rem 0.45rem !important;
+            margin-top: 0.95rem;
+            width: 100%;
+        }
+
+        .st-key-selected_option_idx [data-testid="stWidgetLabel"] p {
+            font-size: 1.28rem !important;
+            font-weight: 700 !important;
+            margin-bottom: 0.55rem !important;
         }
 
         .st-key-selected_option_idx div[data-testid="stRadio"] label {
@@ -854,7 +857,7 @@ with tab_reco:
         for i, opt in enumerate(data["options"], start=1):
             with st.container():
                 medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
-                rank_cls = f" rank-card rank-card-{i}" if i <= 3 else ""
+                rank_cls = f"rank-card rank-card-{i}" if i <= 3 else "rank-card rank-card-plain"
                 st.markdown(
                     (
                         f"<div class='{rank_cls.strip()}'>"
@@ -871,13 +874,11 @@ with tab_reco:
             f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
             for i, o in enumerate(data["options"])
         ]
-        st.markdown("<div class='choice-title'>✔️ 실제 결제할 카드 선택</div>", unsafe_allow_html=True)
         st.radio(
-            "카드 선택",
+            "✔️ 실제 결제할 카드 선택",
             options=list(range(len(labels))),
             format_func=lambda idx: labels[idx],
             key="selected_option_idx",
-            label_visibility="collapsed",
         )
 
         col_done, col_cancel = st.columns(2)
