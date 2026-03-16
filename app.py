@@ -635,7 +635,8 @@ def inject_ui_theme() -> None:
 
         .st-key-selected_option_idx div[data-testid="stRadio"] {
             background: rgba(255,255,255,0.56) !important;
-            border-radius: 16px;
+            border-radius: 16px !important;
+            overflow: hidden;
             padding: 0.85rem 0.75rem 0.45rem !important;
             margin-top: 0.95rem;
             width: 100% !important;
