@@ -618,15 +618,22 @@ def inject_ui_theme() -> None:
         .choice-title {
             font-size: 1.28rem;
             font-weight: 700;
-            margin: 0.25rem 0 0.45rem;
+            margin: 1rem 0 0.55rem;
             color: var(--text);
         }
 
-        div[data-testid="stRadio"] label {
+        /* 결제카드 선택 라디오 영역만 박스 처리 (다른 라디오는 영향 없음) */
+        .choice-title + div[data-testid="stRadio"] {
             background: rgba(255,255,255,0.56);
-            border-radius: 12px;
-            padding: 0.42rem 0.55rem;
-            margin-bottom: 0.35rem;
+            border-radius: 16px;
+            padding: 0.65rem 0.55rem 0.35rem;
+        }
+
+        .choice-title + div[data-testid="stRadio"] label {
+            background: transparent !important;
+            border-radius: 0;
+            padding: 0.22rem 0.2rem;
+            margin-bottom: 0.25rem;
         }
 
         .section-spacer {
