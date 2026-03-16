@@ -438,12 +438,29 @@ def inject_ui_theme() -> None:
             background: transparent !important;
         }
 
+        [data-testid="stVerticalBlockBorderWrapper"]::before,
+        [data-testid="stVerticalBlockBorderWrapper"]::after {
+            display: none !important;
+            border: 0 !important;
+        }
+
         div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
             border-radius: calc(var(--radius) + 2px);
-            box-shadow: 0 14px 34px rgba(53, 99, 255, 0.08) !important;
-            background: rgba(255,255,255,0.78) !important;
-            backdrop-filter: blur(14px);
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: rgba(255,255,255,0.55) !important;
+            backdrop-filter: blur(10px);
             padding: 0.2rem 0.3rem;
+        }
+
+        /* st.form outer frame 제거 */
+        [data-testid="stForm"],
+        .stForm {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
         }
 
         h1, h2, h3, label, p, li, span,
@@ -543,14 +560,14 @@ def inject_ui_theme() -> None:
             border-radius: 12px;
             border: none !important;
             background: rgba(247, 249, 255, 0.92);
-            box-shadow: inset 0 0 0 1px rgba(216, 228, 255, 0.45);
+            box-shadow: none !important;
         }
 
         div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
             border-radius: 12px;
             border: none !important;
             overflow: hidden;
-            box-shadow: inset 0 0 0 1px rgba(219, 229, 245, 0.55);
+            box-shadow: none !important;
             background: rgba(255,255,255,0.74);
         }
 
@@ -671,7 +688,7 @@ def benefit_display_currency(promo: CardPromo) -> str:
 tab_reco, tab_promo = st.tabs(["💳 카드 추천", "🏪 행사 관리"])
 
 with tab_reco:
-    with st.container(border=True):
+    with st.container():
         left, right = st.columns([2, 1])
         with left:
             st.subheader("💱 실시간 환율")
@@ -691,7 +708,7 @@ with tab_reco:
         else:
             st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
-    with st.container(border=True):
+    with st.container():
         st.subheader("💴 결제 정보")
         if st.session_state.reset_pay_jpy:
             st.session_state.pay_jpy_input = 0
@@ -767,7 +784,7 @@ with tab_reco:
         st.subheader("🔍 결제 카드 선택")
 
         for i, opt in enumerate(data["options"], start=1):
-            with st.container(border=True):
+            with st.container():
                 medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
                 st.markdown(f"**<span class='rank-medal'>{medal}</span>{i}위. {opt['card_name']}**", unsafe_allow_html=True)
                 st.write(
@@ -818,7 +835,7 @@ with tab_reco:
                 st.info("결제 추가 없이 취소되었습니다.")
                 st.rerun()
 
-    with st.container(border=True):
+    with st.container():
         st.subheader("📒 결제내역 원장")
         card_names = sorted({p.card_name for p in st.session_state.promos})
         edited_txns = st.data_editor(
@@ -842,7 +859,7 @@ with tab_reco:
             st.rerun()
 
 with tab_promo:
-    with st.container(border=True):
+    with st.container():
         st.subheader("🏪 행사 관리")
 
         with st.form("promo_add_form", clear_on_submit=True):
@@ -903,7 +920,7 @@ with tab_promo:
                     st.success("행사가 추가되었습니다.")
                     st.rerun()
 
-    with st.container(border=True):
+    with st.container():
         st.subheader("📒 행사 리스트")
         uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
         if uploaded_csv is not None:
