@@ -429,11 +429,11 @@ def inject_ui_theme() -> None:
         }
 
         div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: var(--radius);
-            border: 1px solid var(--line);
-            box-shadow: var(--shadow);
-            background: rgba(255,255,255,0.92);
-            backdrop-filter: blur(8px);
+            border-radius: calc(var(--radius) + 2px);
+            border: none !important;
+            box-shadow: 0 14px 34px rgba(53, 99, 255, 0.08);
+            background: rgba(255,255,255,0.78);
+            backdrop-filter: blur(14px);
         }
 
         h1, h2, h3, label, p, li, span,
@@ -453,7 +453,7 @@ def inject_ui_theme() -> None:
         div[data-baseweb="base-input"] input,
         textarea {
             border-radius: 12px !important;
-            border-color: var(--line) !important;
+            border-color: rgba(198, 212, 236, 0.65) !important;
             background: #fff !important;
             color: var(--text) !important;
             min-height: 42px;
@@ -470,7 +470,7 @@ def inject_ui_theme() -> None:
             border-radius: 12px;
             min-height: 42px;
             font-weight: 650;
-            border: 1px solid #d9e2ff !important;
+            border: none !important;
             background: var(--primary-soft) !important;
             color: #2b3f87 !important;
         }
@@ -492,7 +492,7 @@ def inject_ui_theme() -> None:
         div[data-baseweb="tab-list"] {
             background: transparent !important;
             gap: 0.25rem;
-            border-bottom: 1px solid var(--line);
+            border-bottom: none;
             padding-bottom: 0.1rem;
         }
 
@@ -515,7 +515,7 @@ def inject_ui_theme() -> None:
             background: transparent !important;
             color: #2f4dbe !important;
             font-weight: 700;
-            border-bottom: 2px solid var(--primary) !important;
+            border-bottom: 2px solid rgba(53, 99, 255, 0.65) !important;
         }
 
         [data-baseweb="tab-highlight"] {
@@ -525,14 +525,17 @@ def inject_ui_theme() -> None:
 
         div[data-testid="stAlert"] {
             border-radius: 12px;
-            border: 1px solid #d8e4ff;
-            background: #f7f9ff;
+            border: none !important;
+            background: rgba(247, 249, 255, 0.92);
+            box-shadow: inset 0 0 0 1px rgba(216, 228, 255, 0.45);
         }
 
         div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
             border-radius: 12px;
-            border: 1px solid var(--line);
+            border: none !important;
             overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(219, 229, 245, 0.55);
+            background: rgba(255,255,255,0.74);
         }
 
         div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
