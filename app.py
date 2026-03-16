@@ -482,15 +482,27 @@ def inject_ui_theme() -> None:
             filter: brightness(0.97);
         }
 
+        div[data-baseweb="tab-list"] {
+            background: transparent !important;
+            gap: 0.25rem;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 0.1rem;
+        }
+
         button[role="tab"] {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
             border-radius: 10px;
             color: #445172 !important;
+            padding: 0.45rem 0.7rem;
         }
 
         button[role="tab"][aria-selected="true"] {
             background: var(--primary-soft) !important;
             color: #2f4dbe !important;
             font-weight: 700;
+            border-bottom: 2px solid var(--primary) !important;
         }
 
         div[data-testid="stAlert"] {
@@ -513,6 +525,16 @@ def inject_ui_theme() -> None:
             color: var(--muted);
             font-size: 0.83rem;
             line-height: 1.4;
+        }
+
+        .rate-updated {
+            color: var(--muted);
+            font-size: 0.78rem;
+            margin-top: 0.1rem;
+        }
+
+        .rank-medal {
+            margin-right: 0.35rem;
         }
 
         @media (max-width: 768px) {
@@ -587,6 +609,8 @@ if "pending_calc" not in st.session_state:
     st.session_state.pending_calc = None
 if "selected_option_idx" not in st.session_state:
     st.session_state.selected_option_idx = 0
+if "fx_updated_at" not in st.session_state:
+    st.session_state.fx_updated_at = None
 
 
 def format_money(amount: float, currency: str) -> str:
@@ -619,10 +643,14 @@ with tab_reco:
 
         if refresh or "fx_rates" not in st.session_state:
             st.session_state.fx_rates = get_fx_rates()
+            st.session_state.fx_updated_at = dt.datetime.now() if st.session_state.fx_rates else None
 
         fx_rates = st.session_state.fx_rates
         if fx_rates:
             st.success(f"1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW")
+            if st.session_state.fx_updated_at:
+                updated_text = st.session_state.fx_updated_at.strftime("%Y-%m-%d %H:%M")
+                st.markdown(f"<div class='rate-updated'>마지막 업데이트: {updated_text}</div>", unsafe_allow_html=True)
         else:
             st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
@@ -703,7 +731,8 @@ with tab_reco:
 
         for i, opt in enumerate(data["options"], start=1):
             with st.container(border=True):
-                st.markdown(f"**{i}위. {opt['card_name']}**")
+                medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
+                st.markdown(f"**<span class='rank-medal'>{medal}</span>{i}위. {opt['card_name']}**", unsafe_allow_html=True)
                 st.write(
                     f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
                     f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
