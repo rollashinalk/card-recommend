@@ -431,10 +431,12 @@ def inject_ui_theme() -> None:
             font-size: .95rem;
         }
 
-        h2 {
-            font-size: clamp(0.88rem, 2.2vw, 1.04rem) !important;
-            line-height: 1.22 !important;
+        [data-testid="stHeadingWithActionElements"] h2,
+        [data-testid="stHeadingWithActionElements"] h3 {
+            font-size: clamp(1.35rem, 4.3vw, 1.95rem) !important;
+            line-height: 1.12 !important;
             margin-bottom: 0.28rem !important;
+            letter-spacing: -0.02em;
         }
 
         /* Streamlit container(border=True) wrappers */
@@ -678,20 +680,23 @@ def inject_ui_theme() -> None:
 
         @media screen and (max-width: 1700px) {
             .main .block-container { padding-top: 0.95rem; }
-            h2 { font-size: clamp(0.96rem, 2.4vw, 1.12rem) !important; }
+            [data-testid="stHeadingWithActionElements"] h2,
+            [data-testid="stHeadingWithActionElements"] h3 { font-size: clamp(1.24rem, 3.6vw, 1.62rem) !important; }
         }
 
         @media screen and (max-width: 1100px) {
             .main .block-container { padding-top: 0.82rem; }
             .hero-banner { padding: 0.66rem 0.88rem !important; margin-bottom: 0.28rem !important; }
             .hero-banner h1 { margin: 0.06rem 0 0.24rem !important; font-size: clamp(1.18rem, 4.2vw, 1.52rem) !important; }
-            h2 { font-size: clamp(0.82rem, 2.9vw, 0.94rem) !important; margin-bottom: 0.24rem !important; }
+            [data-testid="stHeadingWithActionElements"] h2,
+            [data-testid="stHeadingWithActionElements"] h3 { font-size: clamp(1.18rem, 4.2vw, 1.52rem) !important; margin-bottom: 0.24rem !important; }
         }
 
         @media screen and (max-width: 768px) {
             .hero-banner { padding: 0.48rem 0.78rem !important; }
             .hero-banner h1 { font-size: clamp(1.14rem, 6.2vw, 1.42rem) !important; }
-            h2 { font-size: clamp(0.76rem, 3.9vw, 0.88rem) !important; }
+            [data-testid="stHeadingWithActionElements"] h2,
+            [data-testid="stHeadingWithActionElements"] h3 { font-size: clamp(1.14rem, 6.2vw, 1.42rem) !important; }
         }
         </style>
         """,
