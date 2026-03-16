@@ -21,12 +21,12 @@ Streamlit Community Cloud에 바로 배포할 수 있는 카드 추천 앱입니
 - 카드/행사 테이블 직접 수정 + CSV 업로드
 
 ## 프로모션 CSV 컬럼
-`card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,used_count,total_cap_amount,total_cap_currency,total_used_amount,merchant_type,formula_id,formula_params_json`
+`card_name,enabled,reward_type,start_date,end_date,min_amount,min_currency,percent_value,fixed_amount,max_reward_per_txn,max_reward_per_txn_currency,max_uses,used_count,total_cap_amount,total_cap_currency,total_used_amount,monthly_spend_cap_amount,monthly_spend_cap_currency,monthly_spend_used_amount,monthly_reward_cap_amount,monthly_reward_cap_currency,monthly_reward_used_amount,merchant_type,formula_id,formula_params_json`
 
 ## 참고
 - `merchant_type=kb_cvs3`는 KB 편의점 그룹(세븐/로손/패밀리) 전용입니다.
 - `max_uses`가 비어있거나 0이면 횟수 제한 없음으로 처리됩니다.
-- BC GOAT처럼 KRW 한도형 규칙도 CSV로 입력 가능합니다.
+- BC GOAT 월 한도 로직 지원: `monthly_spend_cap_*`(월 결제금액 한도), `monthly_reward_cap_*`(월 혜택 한도), `*_used_amount`(당월 누적) 컬럼으로 계산합니다.
 - 신한 더모아(`formula_cashback`, `shinhan_the_more_v1`)는 원화 환산 금액 기준 `(결제금액 % 1000) x 2` 공식을 적용합니다. 예: 5,999원 -> 1,998원
 
 ## 로컬 실행

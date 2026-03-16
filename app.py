@@ -33,6 +33,12 @@ class CardPromo:
     total_cap_amount: float
     total_cap_currency: str
     total_used_amount: float
+    monthly_spend_cap_amount: float
+    monthly_spend_cap_currency: str
+    monthly_spend_used_amount: float
+    monthly_reward_cap_amount: float
+    monthly_reward_cap_currency: str
+    monthly_reward_used_amount: float
     merchant_type: str
     formula_id: str
     formula_params_json: str
@@ -138,7 +144,18 @@ def evaluate(
         reason = f"정액 캐시백 {promo.fixed_amount:g} {promo.min_currency}"
 
     elif promo.reward_type == "cashback_with_cap":
-        raw = pay_jpy * (promo.percent_value / 100.0)
+        eligible_ratio = 1.0
+        if promo.monthly_spend_cap_amount > 0:
+            monthly_spend_cap = promo.monthly_spend_cap_amount
+            monthly_spend_used = promo.monthly_spend_used_amount
+            remain_spend = max(monthly_spend_cap - monthly_spend_used, 0)
+            if remain_spend <= 0:
+                return 0, "월 결제금액 한도 소진"
+            pay_in_spend_currency = convert(float(pay_jpy), "JPY", promo.monthly_spend_cap_currency, fx_rates)
+            eligible_spend = min(pay_in_spend_currency, remain_spend)
+            eligible_ratio = max(min(eligible_spend / pay_in_spend_currency, 1.0), 0.0) if pay_in_spend_currency > 0 else 0.0
+
+        raw = pay_jpy * eligible_ratio * (promo.percent_value / 100.0)
         if promo.max_reward_per_txn > 0:
             per_txn_cap_jpy = convert(
                 promo.max_reward_per_txn,
@@ -147,8 +164,17 @@ def evaluate(
                 fx_rates,
             )
             raw = min(raw, per_txn_cap_jpy)
+
+        if promo.monthly_reward_cap_amount > 0:
+            reward_cap_jpy = convert(promo.monthly_reward_cap_amount, promo.monthly_reward_cap_currency, "JPY", fx_rates)
+            reward_used_jpy = convert(promo.monthly_reward_used_amount, promo.monthly_reward_cap_currency, "JPY", fx_rates)
+            remain_reward_jpy = max(reward_cap_jpy - reward_used_jpy, 0)
+            if remain_reward_jpy <= 0:
+                return 0, "월 캐시백 한도 소진"
+            raw = min(raw, remain_reward_jpy)
+
         reward_jpy = raw
-        reason = f"캐시백 {promo.percent_value:g}% + 한도 적용"
+        reason = f"캐시백 {promo.percent_value:g}% + 월 한도 적용"
 
     elif promo.reward_type == "formula_cashback":
         reward_jpy, formula_reason = calc_formula_cashback(
@@ -173,12 +199,12 @@ def evaluate(
 
 def seed_promotions() -> List[CardPromo]:
     return [
-        CardPromo("KB UPI (가온 체크)", True, "percent_discount", dt.date(2026, 2, 14), dt.date(2026, 5, 13), 10000, "JPY", 15, 0, 2000, "JPY", 5, 0, 0, "JPY", 0, "all", "", ""),
-        CardPromo("하나 UPI (트래블로그)", True, "percent_discount", dt.date(2026, 2, 11), dt.date(2026, 4, 30), 50, "USD", 20, 0, 10, "USD", 3, 0, 0, "JPY", 0, "all", "", ""),
-        CardPromo("우리 UPI (SKT우리)", True, "percent_discount", dt.date(2025, 12, 22), dt.date(2026, 5, 31), 50, "USD", 11, 0, 15, "USD", 3, 0, 0, "JPY", 0, "all", "", ""),
-        CardPromo("BC GOAT", True, "cashback_with_cap", None, None, 0, "USD", 6, 0, 0, "USD", 0, 0, 30000, "KRW", 0, "all", "", ""),
-        CardPromo("KB 일본 편의점 행사 (KB 트래블러스)", True, "fixed_cashback", dt.date(2026, 3, 1), dt.date(2026, 3, 31), 1000, "JPY", 0, 500, 0, "JPY", 10, 0, 5000, "JPY", 0, "kb_cvs3", "", ""),
-        CardPromo("신한 더모아", True, "formula_cashback", None, None, 0, "KRW", 0, 0, 0, "KRW", 0, 0, 0, "KRW", 0, "all", "shinhan_the_more_v1", ""),
+        CardPromo("KB UPI (가온 체크)", True, "percent_discount", dt.date(2026, 2, 14), dt.date(2026, 5, 13), 10000, "JPY", 15, 0, 2000, "JPY", 5, 0, 0, "JPY", 0, 0, "KRW", 0, 0, "KRW", 0, "all", "", ""),
+        CardPromo("하나 UPI (트래블로그)", True, "percent_discount", dt.date(2026, 2, 11), dt.date(2026, 4, 30), 50, "USD", 20, 0, 10, "USD", 3, 0, 0, "JPY", 0, 0, "KRW", 0, 0, "KRW", 0, "all", "", ""),
+        CardPromo("우리 UPI (SKT우리)", True, "percent_discount", dt.date(2025, 12, 22), dt.date(2026, 5, 31), 50, "USD", 11, 0, 15, "USD", 3, 0, 0, "JPY", 0, 0, "KRW", 0, 0, "KRW", 0, "all", "", ""),
+        CardPromo("BC GOAT", True, "cashback_with_cap", None, None, 0, "USD", 6, 0, 0, "USD", 0, 0, 0, "KRW", 0, 1000000, "KRW", 0, 30000, "KRW", 0, "all", "", ""),
+        CardPromo("KB 일본 편의점 행사 (KB 트래블러스)", True, "fixed_cashback", dt.date(2026, 3, 1), dt.date(2026, 3, 31), 1000, "JPY", 0, 500, 0, "JPY", 10, 0, 5000, "JPY", 0, 0, "KRW", 0, 0, "KRW", 0, "kb_cvs3", "", ""),
+        CardPromo("신한 더모아", True, "formula_cashback", None, None, 0, "KRW", 0, 0, 0, "KRW", 0, 0, 0, "KRW", 0, 0, "KRW", 0, 0, "KRW", 0, "all", "shinhan_the_more_v1", ""),
     ]
 
 
@@ -208,6 +234,12 @@ def rows_to_promos(rows: List[dict]) -> List[CardPromo]:
                     total_cap_amount=float(row.get("total_cap_amount", 0)),
                     total_cap_currency=str(row.get("total_cap_currency", "JPY")),
                     total_used_amount=float(row.get("total_used_amount", 0)),
+                    monthly_spend_cap_amount=float(row.get("monthly_spend_cap_amount", 0)),
+                    monthly_spend_cap_currency=str(row.get("monthly_spend_cap_currency", "KRW")),
+                    monthly_spend_used_amount=float(row.get("monthly_spend_used_amount", 0)),
+                    monthly_reward_cap_amount=float(row.get("monthly_reward_cap_amount", 0)),
+                    monthly_reward_cap_currency=str(row.get("monthly_reward_cap_currency", "KRW")),
+                    monthly_reward_used_amount=float(row.get("monthly_reward_used_amount", 0)),
                     merchant_type=str(row.get("merchant_type", "all")),
                     formula_id=str(row.get("formula_id", "")),
                     formula_params_json=str(row.get("formula_params_json", "")),
@@ -241,6 +273,12 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
                 "total_cap_amount": float(r.get("total_cap_amount", 0) or 0),
                 "total_cap_currency": r.get("total_cap_currency", "JPY") or "JPY",
                 "total_used_amount": float(r.get("total_used_amount", 0) or 0),
+                "monthly_spend_cap_amount": float(r.get("monthly_spend_cap_amount", 0) or 0),
+                "monthly_spend_cap_currency": r.get("monthly_spend_cap_currency", "KRW") or "KRW",
+                "monthly_spend_used_amount": float(r.get("monthly_spend_used_amount", 0) or 0),
+                "monthly_reward_cap_amount": float(r.get("monthly_reward_cap_amount", 0) or 0),
+                "monthly_reward_cap_currency": r.get("monthly_reward_cap_currency", "KRW") or "KRW",
+                "monthly_reward_used_amount": float(r.get("monthly_reward_used_amount", 0) or 0),
                 "merchant_type": r.get("merchant_type", "all") or "all",
                 "formula_id": r.get("formula_id", "") or "",
                 "formula_params_json": r.get("formula_params_json", "") or "",
@@ -308,6 +346,8 @@ with st.container(border=True):
             "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+            "monthly_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+            "monthly_reward_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
             "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
             "formula_params_json": st.column_config.TextColumn(help='예: {"unit":1000,"amount_per_unit":100}'),
         },
