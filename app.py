@@ -408,6 +408,8 @@ if "merchant_type_input" not in st.session_state:
     st.session_state.merchant_type_input = MERCHANT_NORMAL
 if "pay_jpy_input" not in st.session_state:
     st.session_state.pay_jpy_input = 0
+if "reset_pay_jpy" not in st.session_state:
+    st.session_state.reset_pay_jpy = False
 if "pending_calc" not in st.session_state:
     st.session_state.pending_calc = None
 if "selected_option_idx" not in st.session_state:
@@ -450,6 +452,9 @@ with st.container(border=True):
 
 with st.container(border=True):
     st.subheader("결제 정보")
+    if st.session_state.reset_pay_jpy:
+        st.session_state.pay_jpy_input = 0
+        st.session_state.reset_pay_jpy = False
     merchant_type = st.radio(
         "가맹점 유형",
         [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
@@ -513,7 +518,7 @@ if calculate_clicked:
             "options": options,
         }
         st.session_state.selected_option_idx = 0
-        st.session_state.pay_jpy_input = 0
+        st.session_state.reset_pay_jpy = True
         st.rerun()
 
 if st.session_state.pending_calc:
