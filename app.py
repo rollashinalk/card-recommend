@@ -630,18 +630,25 @@ def inject_ui_theme() -> None:
             border-radius: 0 !important;
         }
 
-        /* 결제카드 선택 라디오(두 번째 라디오 그룹)만 통합 박스 적용 */
-        div[data-testid="stRadio"]:not(:first-of-type) {
+        /* 결제카드 선택 라디오(key=selected_option_idx)만 통합 박스 적용 */
+        .st-key-selected_option_idx div[data-testid="stRadio"] {
             background: rgba(255,255,255,0.56) !important;
             border-radius: 16px;
             padding: 0.65rem 0.55rem 0.35rem !important;
         }
 
-        div[data-testid="stRadio"]:not(:first-of-type) label {
+        .st-key-selected_option_idx div[data-testid="stRadio"] label {
             background: transparent !important;
             border-radius: 0;
             padding: 0.22rem 0.2rem;
             margin-bottom: 0.25rem;
+        }
+
+        /* 가맹점 라디오는 명시적으로 배경 제거 */
+        .st-key-merchant_type_input div[data-testid="stRadio"] {
+            background: transparent !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
         }
 
         .section-spacer {
