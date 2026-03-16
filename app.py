@@ -1,4 +1,5 @@
 import csv
+import copy
 import datetime as dt
 import io
 from dataclasses import dataclass
@@ -446,6 +447,36 @@ def rows_to_transactions(rows: List[dict]) -> List[Transaction]:
     return transactions
 
 
+def has_transaction_changes(before: List[Transaction], after: List[Transaction]) -> bool:
+    return transaction_rows(before) != transaction_rows(after)
+
+
+def validate_transactions(transactions: List[Transaction], valid_card_names: set[str]) -> tuple[bool, list[str], list[str]]:
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    today = dt.date.today()
+    future_ids = []
+    unknown_card_ids = []
+
+    for txn in transactions:
+        if txn.amount < 0:
+            errors.append(
+                f"거래 '{txn.txn_id or '(ID 없음)'}'의 금액이 음수입니다 ({txn.amount:g}). 0 이상으로 입력해 주세요."
+            )
+        if txn.txn_date > today:
+            future_ids.append(txn.txn_id or "(ID 없음)")
+        if txn.card_name and txn.card_name not in valid_card_names:
+            unknown_card_ids.append(txn.txn_id or "(ID 없음)")
+
+    if future_ids:
+        warnings.append(f"미래 날짜 거래가 있습니다: {', '.join(future_ids)}")
+    if unknown_card_ids:
+        warnings.append(f"행사 목록에 없는 카드명이 있습니다: {', '.join(unknown_card_ids)}")
+
+    return (len(errors) == 0), errors, warnings
+
+
 def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
     text = uploaded_file.getvalue().decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
@@ -486,6 +517,8 @@ if "promos" not in st.session_state:
     st.session_state.promos = seed_promotions()
 if "transactions" not in st.session_state:
     st.session_state.transactions = seed_transactions()
+if "transactions_prev" not in st.session_state:
+    st.session_state.transactions_prev = None
 if "selected_merchant_type" not in st.session_state:
     st.session_state.selected_merchant_type = MERCHANT_NORMAL
 
@@ -550,7 +583,13 @@ with st.container(border=True):
 
 with st.container(border=True):
     st.subheader("결제내역 관리")
-    st.caption("행 추가/수정 후 status를 변경해 관리하세요. 사용자 실수 복구를 위해 삭제 대신 status=cancelled 사용을 권장합니다.")
+    st.caption("행 추가/수정 후 status를 변경해 관리하세요. 삭제보다 approved → cancelled 상태 전환을 기본으로 권장합니다.")
+
+    if st.button("최근 변경 되돌리기", use_container_width=True, disabled=st.session_state.transactions_prev is None):
+        st.session_state.transactions = copy.deepcopy(st.session_state.transactions_prev)
+        st.session_state.transactions_prev = None
+        st.success("직전 스냅샷으로 복원했습니다.")
+
     edited_txns = st.data_editor(
         transaction_rows(st.session_state.transactions),
         num_rows="dynamic",
@@ -564,7 +603,62 @@ with st.container(border=True):
             "note": st.column_config.TextColumn(help="취소 사유/메모"),
         },
     )
-    st.session_state.transactions = rows_to_transactions(edited_txns)
+
+    candidate_transactions = rows_to_transactions(edited_txns)
+    valid_card_names = {promo.card_name for promo in st.session_state.promos if promo.card_name.strip()}
+    valid, txn_errors, txn_warnings = validate_transactions(candidate_transactions, valid_card_names)
+
+    if valid and has_transaction_changes(st.session_state.transactions, candidate_transactions):
+        st.session_state.transactions_prev = copy.deepcopy(st.session_state.transactions)
+        st.session_state.transactions = candidate_transactions
+
+    for err in txn_errors:
+        st.error(err)
+    for warn in txn_warnings:
+        st.warning(warn)
+
+    approved_candidates = [
+        txn
+        for txn in st.session_state.transactions
+        if txn.status == "approved"
+    ]
+    approved_options = {
+        f"{txn.txn_id or '(ID 없음)'} | {txn.txn_date.isoformat()} | {txn.card_name} | {txn.amount:g} {txn.currency}": txn.txn_id
+        for txn in approved_candidates
+    }
+
+    col_quick, col_hint = st.columns([1, 1])
+    with col_quick:
+        selected_txn_label = st.selectbox(
+            "취소 처리 대상",
+            options=list(approved_options.keys()),
+            disabled=not approved_options,
+            index=None,
+            placeholder="승인 거래를 선택하세요",
+        )
+        if st.button("취소 처리", use_container_width=True, disabled=not approved_options):
+            if not selected_txn_label:
+                st.warning("취소 처리할 거래를 먼저 선택해 주세요.")
+            else:
+                target_txn_id = approved_options[selected_txn_label]
+                target_index = next(
+                    (
+                        idx
+                        for idx, txn in enumerate(st.session_state.transactions)
+                        if txn.txn_id == target_txn_id and txn.status == "approved"
+                    ),
+                    -1,
+                )
+                if target_index >= 0:
+                    st.session_state.transactions_prev = copy.deepcopy(st.session_state.transactions)
+                    st.session_state.transactions[target_index].status = "cancelled"
+                    if not st.session_state.transactions[target_index].note.strip():
+                        st.session_state.transactions[target_index].note = "빠른 액션으로 취소 처리"
+                    st.success("선택 거래를 cancelled 상태로 변경했습니다.")
+                else:
+                    st.warning("해당 거래를 찾을 수 없거나 이미 취소된 상태입니다.")
+    with col_hint:
+        st.info("빠른 액션은 거래를 삭제하지 않고 상태를 approved → cancelled로 전환합니다.")
 
 if st.button("최적 카드 계산", type="primary", use_container_width=True):
     if not fx_rates:
