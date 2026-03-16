@@ -5,6 +5,7 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import List
+from zoneinfo import ZoneInfo
 
 import requests
 import streamlit as st
@@ -15,6 +16,7 @@ APP_STATE_PATH = Path("app_state.json")
 MERCHANT_NORMAL = "일반"
 MERCHANT_KB_CVS3 = "KB 3대 편의점(세븐, 로손, 패밀리)"
 SUPPORTED_CURRENCIES = ["JPY", "USD", "KRW"]
+KST = ZoneInfo("Asia/Seoul")
 
 
 @dataclass
@@ -360,6 +362,309 @@ def load_app_state() -> tuple[List[CardPromo], List[Txn]]:
         return seed_promotions(), seed_transactions()
 
 
+def inject_ui_theme() -> None:
+    st.markdown(
+        """
+        <style>
+        :root,
+        [data-theme="light"],
+        [data-theme="dark"] {
+            color-scheme: light;
+            --primary-color: #3563ff !important;
+            --link-color: #3563ff !important;
+            --bg: #f5f8ff;
+            --card: #ffffff;
+            --line: #dbe5f5;
+            --text: #111827;
+            --muted: #667085;
+            --primary: #3563ff;
+            --primary-dark: #274dd6;
+            --primary-soft: #eaf0ff;
+            --shadow: 0 16px 36px rgba(30, 64, 175, 0.10);
+            --radius: 18px;
+        }
+
+        html, body, [data-testid="stAppViewContainer"], .stApp {
+            background:
+                radial-gradient(circle at 12% -20%, #dbeafe 0%, transparent 45%),
+                radial-gradient(circle at 90% 8%, #e0e7ff 0%, transparent 30%),
+                var(--bg) !important;
+            color: var(--text) !important;
+        }
+
+        .main .block-container {
+            max-width: 920px;
+            padding-top: 1.6rem;
+            padding-bottom: 3rem;
+        }
+
+        .hero-banner {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+            box-shadow: var(--shadow);
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-banner .eyebrow {
+            margin: 0;
+            color: #3555cc;
+            font-size: .76rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .hero-banner h1 {
+            margin: .2rem 0 .4rem;
+            font-size: clamp(1.5rem, 2.3vw, 2.1rem);
+            letter-spacing: -.02em;
+            line-height: 1.2;
+            color: var(--text);
+        }
+
+        .hero-banner p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .95rem;
+        }
+
+        /* Streamlit container(border=True) wrappers */
+        [data-testid="stVerticalBlockBorderWrapper"],
+        [data-testid="stVerticalBlockBorderWrapper"] > div,
+        [data-testid="stVerticalBlockBorderWrapper"] > div > div {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        [data-testid="stVerticalBlockBorderWrapper"]::before,
+        [data-testid="stVerticalBlockBorderWrapper"]::after {
+            display: none !important;
+            border: 0 !important;
+        }
+
+        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: calc(var(--radius) + 2px);
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: rgba(255,255,255,0.55) !important;
+            backdrop-filter: blur(10px);
+            padding: 0.2rem 0.3rem;
+        }
+
+        /* st.form outer frame 제거 */
+        [data-testid="stForm"],
+        .stForm {
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+
+        h1, h2, h3, label, p, li, span,
+        div[data-testid="stMarkdownContainer"] p,
+        div[data-testid="stRadio"] label p,
+        div[data-testid="stCaptionContainer"] p {
+            color: var(--text) !important;
+        }
+
+        div[data-testid="stCaptionContainer"] p,
+        .stCaption p {
+            color: var(--muted) !important;
+        }
+
+
+        input[type="radio"],
+        input[type="checkbox"] {
+            accent-color: var(--primary) !important;
+        }
+
+        div[data-baseweb="input"] input,
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="base-input"] input,
+        textarea {
+            border-radius: 12px !important;
+            border-color: rgba(198, 212, 236, 0.65) !important;
+            background: #fff !important;
+            color: var(--text) !important;
+            min-height: 42px;
+        }
+
+        div[data-baseweb="input"] input:focus,
+        div[data-baseweb="base-input"] input:focus,
+        textarea:focus {
+            box-shadow: 0 0 0 3px rgba(53,99,255,.14);
+        }
+
+        .stButton > button,
+        [data-testid="stFormSubmitButton"] > button {
+            border-radius: 12px;
+            min-height: 42px;
+            font-weight: 650;
+            border: none !important;
+            background: var(--primary-soft) !important;
+            color: #2b3f87 !important;
+        }
+
+        .stButton > button[kind="primary"],
+        .stButton > button[data-testid="baseButton-primary"],
+        [data-testid="stFormSubmitButton"] > button,
+        [data-testid="stFormSubmitButton"] > button[kind="primary"] {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            background: linear-gradient(180deg, #4d75ff 0%, #355ff3 100%) !important;
+            border-color: #355ff3 !important;
+        }
+
+        .stButton > button:hover,
+        [data-testid="stFormSubmitButton"] > button:hover {
+            filter: brightness(0.97);
+        }
+
+        div[data-baseweb="tab-list"] {
+            background: transparent !important;
+            gap: 0.25rem;
+            border-bottom: none;
+            padding-bottom: 0.1rem;
+        }
+
+        [data-baseweb="tab"] {
+            background: transparent !important;
+        }
+
+        button[role="tab"],
+        [data-baseweb="tab"] > button {
+            border: 0 !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            color: #445172 !important;
+            padding: 0.45rem 0.7rem;
+        }
+
+        button[role="tab"][aria-selected="true"],
+        [data-baseweb="tab"] > button[aria-selected="true"] {
+            background: transparent !important;
+            color: #2f4dbe !important;
+            font-weight: 700;
+            border-bottom: 2px solid rgba(53, 99, 255, 0.65) !important;
+        }
+
+        [data-baseweb="tab-highlight"] {
+            background: var(--primary) !important;
+            height: 2px !important;
+        }
+
+        div[data-testid="stAlert"],
+        div[data-baseweb="notification"] {
+            border-radius: 12px;
+            border: none !important;
+            background: rgba(255, 255, 255, 0.56) !important;
+            box-shadow: none !important;
+        }
+
+        div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
+            border-radius: 12px;
+            border: none !important;
+            overflow: hidden;
+            box-shadow: none !important;
+            background: rgba(255,255,255,0.74);
+        }
+
+        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
+            margin-bottom: 1rem;
+        }
+
+        .compact-meta {
+            color: var(--muted);
+            font-size: 0.83rem;
+            line-height: 1.4;
+        }
+
+        .rate-updated {
+            color: var(--muted);
+            font-size: 0.78rem;
+            margin-top: 0.1rem;
+        }
+
+        .rank-medal {
+            margin-right: 0.35rem;
+        }
+
+        .rank-card {
+            border-radius: 14px;
+            padding: 0.9rem 1rem;
+            margin: 0.2rem 0;
+        }
+
+        .rank-card-1 { background: rgba(79, 120, 255, 0.12); }
+        .rank-card-2 { background: rgba(128, 92, 255, 0.10); }
+        .rank-card-3 { background: rgba(66, 182, 175, 0.12); }
+        .rank-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+        .rank-benefit {
+            font-size: 0.98rem;
+            margin-bottom: 0.3rem;
+            color: #1f2937;
+        }
+
+        .choice-title {
+            font-size: 1.28rem;
+            font-weight: 700;
+            margin: 1rem 0 0.55rem;
+            color: var(--text);
+        }
+
+        /* 기본 라디오는 배경 없음 */
+        div[data-testid="stRadio"] {
+            background: transparent !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        /* 결제카드 선택 라디오(key=selected_option_idx)만 통합 박스 적용 */
+        .st-key-selected_option_idx div[data-testid="stRadio"] {
+            background: rgba(255,255,255,0.56) !important;
+            border-radius: 16px;
+            padding: 0.65rem 0.55rem 0.35rem !important;
+        }
+
+        .st-key-selected_option_idx div[data-testid="stRadio"] label {
+            background: transparent !important;
+            border-radius: 0;
+            padding: 0.22rem 0.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        /* 가맹점 라디오는 명시적으로 배경 제거 */
+        .st-key-merchant_type_input div[data-testid="stRadio"] {
+            background: transparent !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        .section-spacer {
+            height: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main .block-container { padding-top: 1rem; }
+            .hero-banner { padding: 1rem; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
     text = uploaded_file.getvalue().decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
@@ -397,8 +702,16 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
     return rows_to_promos(rows)
 
 
-st.title("💳 일본 결제 카드 추천")
-st.caption("결제내역 원장 기반으로 혜택 누적/취소 반영을 자동 계산합니다.")
+inject_ui_theme()
+st.markdown(
+    """
+    <div class="hero-banner">
+      <p class="eyebrow">💳 Card Optimizer</p>
+      <h1>일본 결제 카드 추천</h1>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 if "promos" not in st.session_state or "transactions" not in st.session_state:
     loaded_promos, loaded_txns = load_app_state()
@@ -414,6 +727,8 @@ if "pending_calc" not in st.session_state:
     st.session_state.pending_calc = None
 if "selected_option_idx" not in st.session_state:
     st.session_state.selected_option_idx = 0
+if "fx_updated_at" not in st.session_state:
+    st.session_state.fx_updated_at = None
 
 
 def format_money(amount: float, currency: str) -> str:
@@ -434,198 +749,300 @@ def benefit_display_currency(promo: CardPromo) -> str:
     return "JPY"
 
 
-with st.container(border=True):
-    left, right = st.columns([2, 1])
-    with left:
-        st.subheader("실시간 환율")
-    with right:
-        refresh = st.button("환율 새로고침", use_container_width=True)
+tab_reco, tab_promo = st.tabs(["💳 카드 추천", "🏪 행사 관리"])
 
-    if refresh or "fx_rates" not in st.session_state:
-        st.session_state.fx_rates = get_fx_rates()
+with tab_reco:
+    with st.container():
+        left, right = st.columns([2, 1])
+        with left:
+            st.subheader("💱 실시간 환율")
+        with right:
+            refresh = st.button("환율 새로고침", use_container_width=True)
 
-    fx_rates = st.session_state.fx_rates
-    if fx_rates:
-        st.success(f"1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW")
-    else:
-        st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
+        if refresh or "fx_rates" not in st.session_state:
+            st.session_state.fx_rates = get_fx_rates()
+            st.session_state.fx_updated_at = dt.datetime.now(tz=KST) if st.session_state.fx_rates else None
 
-with st.container(border=True):
-    st.subheader("결제 정보")
-    if st.session_state.reset_pay_jpy:
-        st.session_state.pay_jpy_input = 0
-        st.session_state.reset_pay_jpy = False
-    merchant_type = st.radio(
-        "가맹점 유형",
-        [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
-        horizontal=True,
-        key="merchant_type_input",
-    )
-    pay_jpy = st.number_input(
-        "결제 금액 (JPY)", min_value=0, step=1000, key="pay_jpy_input", format="%d"
-    )
-    pay_date = st.date_input("결제 날짜", value=dt.date.today())
-    calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
+        fx_rates = st.session_state.fx_rates
+        if fx_rates:
+            st.success(f"1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW")
+            if st.session_state.fx_updated_at:
+                updated_text = st.session_state.fx_updated_at.strftime("%Y-%m-%d %H:%M")
+                st.markdown(f"<div class='rate-updated'>마지막 업데이트: {updated_text}</div>", unsafe_allow_html=True)
+        else:
+            st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
-if calculate_clicked:
-    if not fx_rates:
-        st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
-    elif pay_jpy <= 0:
-        st.warning("결제 금액을 0보다 크게 입력해 주세요.")
-    else:
-        options = []
-        for promo in st.session_state.promos:
-            state = build_state_from_ledger(promo, st.session_state.transactions, fx_rates)
-            reward_jpy, reason, _, _, _, _ = eval_for_payment(
-                promo, int(pay_jpy), pay_date, merchant_type, fx_rates, state
-            )
-            display_cur = benefit_display_currency(promo)
-            reward_native = convert(float(reward_jpy), "JPY", display_cur, fx_rates) if reward_jpy > 0 else 0.0
-            remaining_uses = "무제한" if promo.max_uses <= 0 else max(promo.max_uses - state.used_count, 0)
-            total_remain_text = "제한없음"
-            if promo.total_cap_amount > 0:
-                total_remain_jpy = max(
-                    convert(promo.total_cap_amount, promo.total_cap_currency, "JPY", fx_rates) - state.total_used_jpy,
-                    0,
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
+    with st.container():
+        st.subheader("💴 결제 정보")
+        if st.session_state.reset_pay_jpy:
+            st.session_state.pay_jpy_input = 0
+            st.session_state.reset_pay_jpy = False
+        merchant_type = st.radio(
+            "가맹점 유형",
+            [MERCHANT_NORMAL, MERCHANT_KB_CVS3],
+            horizontal=True,
+            key="merchant_type_input",
+        )
+        pay_jpy = st.number_input(
+            "결제 금액 (JPY)", min_value=0, step=1000, key="pay_jpy_input", format="%d"
+        )
+        pay_date = st.date_input("결제 날짜", value=dt.date.today())
+        calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
+
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
+    if calculate_clicked:
+        if not fx_rates:
+            st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
+        elif pay_jpy <= 0:
+            st.warning("결제 금액을 0보다 크게 입력해 주세요.")
+        else:
+            options = []
+            for promo in st.session_state.promos:
+                state = build_state_from_ledger(promo, st.session_state.transactions, fx_rates)
+                reward_jpy, reason, _, _, _, _ = eval_for_payment(
+                    promo, int(pay_jpy), pay_date, merchant_type, fx_rates, state
                 )
-                total_remain_text = format_money(total_remain_jpy, "JPY")
+                display_cur = benefit_display_currency(promo)
+                reward_native = convert(float(reward_jpy), "JPY", display_cur, fx_rates) if reward_jpy > 0 else 0.0
+                remaining_uses = "무제한" if promo.max_uses <= 0 else max(promo.max_uses - state.used_count, 0)
+                total_remain_text = "제한없음"
+                if promo.total_cap_amount > 0:
+                    total_remain_jpy = max(
+                        convert(promo.total_cap_amount, promo.total_cap_currency, "JPY", fx_rates) - state.total_used_jpy,
+                        0,
+                    )
+                    total_remain_text = format_money(total_remain_jpy, "JPY")
 
-            mkey = month_key(pay_date)
-            monthly_remain_text = "제한없음"
-            if promo.monthly_reward_cap_amount > 0:
-                used_r = state.month_reward_used.get(mkey, 0.0)
-                rem_r = max(promo.monthly_reward_cap_amount - used_r, 0)
-                monthly_remain_text = format_money(rem_r, promo.monthly_reward_cap_currency)
+                mkey = month_key(pay_date)
+                monthly_remain_text = "제한없음"
+                if promo.monthly_reward_cap_amount > 0:
+                    used_r = state.month_reward_used.get(mkey, 0.0)
+                    rem_r = max(promo.monthly_reward_cap_amount - used_r, 0)
+                    monthly_remain_text = format_money(rem_r, promo.monthly_reward_cap_currency)
 
-            options.append(
-                {
-                    "card_name": promo.card_name,
-                    "reward_jpy": reward_jpy,
-                    "reward_native": reward_native,
-                    "reward_currency": display_cur,
-                    "reason": reason,
-                    "remaining_uses": remaining_uses,
-                    "total_remain_text": total_remain_text,
-                    "monthly_remain_text": monthly_remain_text,
-                }
-            )
-
-        options.sort(key=lambda x: x["reward_jpy"], reverse=True)
-        st.session_state.pending_calc = {
-            "pay_jpy": int(pay_jpy),
-            "pay_date": pay_date.isoformat(),
-            "merchant_type": merchant_type,
-            "options": options,
-        }
-        st.session_state.selected_option_idx = 0
-        st.session_state.reset_pay_jpy = True
-        st.rerun()
-
-if st.session_state.pending_calc:
-    data = st.session_state.pending_calc
-    st.subheader("결제 카드 선택")
-
-    for i, opt in enumerate(data["options"], start=1):
-        with st.container(border=True):
-            st.markdown(f"**{i}위. {opt['card_name']}**")
-            st.write(
-                f"예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
-                f"(비교기준 JPY {opt['reward_jpy']:,.0f})"
-            )
-            st.caption(
-                f"잔여 횟수: {opt['remaining_uses']} | 총 한도 잔여: {opt['total_remain_text']} | "
-                f"월 혜택 잔여: {opt['monthly_remain_text']} | 근거: {opt['reason']}"
-            )
-
-    labels = [
-        f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
-        for i, o in enumerate(data["options"])
-    ]
-    st.radio(
-        "실제 결제할 카드 선택",
-        options=list(range(len(labels))),
-        format_func=lambda idx: labels[idx],
-        key="selected_option_idx",
-    )
-
-    col_done, col_cancel = st.columns(2)
-    with col_done:
-        if st.button("결제 완료", type="primary", use_container_width=True):
-            chosen = data["options"][st.session_state.selected_option_idx]
-            txns = st.session_state.transactions
-            new_id = f"txn-{len(txns)+1}-{int(dt.datetime.now().timestamp())}"
-            txns.append(
-                Txn(
-                    txn_id=new_id,
-                    txn_date=dt.date.fromisoformat(data["pay_date"]),
-                    card_name=chosen["card_name"],
-                    amount_jpy=int(data["pay_jpy"]),
-                    merchant_type=data["merchant_type"],
-                    status="approved",
-                    memo="결제 완료 버튼으로 추가",
+                options.append(
+                    {
+                        "card_name": promo.card_name,
+                        "reward_jpy": reward_jpy,
+                        "reward_native": reward_native,
+                        "reward_currency": display_cur,
+                        "reason": reason,
+                        "remaining_uses": remaining_uses,
+                        "total_remain_text": total_remain_text,
+                        "monthly_remain_text": monthly_remain_text,
+                    }
                 )
-            )
-            st.session_state.transactions = txns
-            st.session_state.pending_calc = None
-            save_app_state(st.session_state.promos, st.session_state.transactions)
-            st.success("결제 내역이 원장에 추가되었습니다.")
-            st.rerun()
-    with col_cancel:
-        if st.button("취소", use_container_width=True):
-            st.session_state.pending_calc = None
-            st.info("결제 추가 없이 취소되었습니다.")
+
+            options.sort(key=lambda x: x["reward_jpy"], reverse=True)
+            st.session_state.pending_calc = {
+                "pay_jpy": int(pay_jpy),
+                "pay_date": pay_date.isoformat(),
+                "merchant_type": merchant_type,
+                "options": options,
+            }
+            st.session_state.selected_option_idx = 0
+            st.session_state.reset_pay_jpy = True
             st.rerun()
 
-with st.container(border=True):
-    st.subheader("결제내역 원장 (취소관리 포함)")
-    st.caption("status가 cancelled인 건은 누적 혜택 계산에서 자동 제외됩니다.")
-    card_names = sorted({p.card_name for p in st.session_state.promos})
-    edited_txns = st.data_editor(
-        txn_rows(st.session_state.transactions),
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "txn_date": st.column_config.DateColumn(),
-            "card_name": st.column_config.SelectboxColumn(options=card_names),
-            "amount_jpy": st.column_config.NumberColumn(min_value=0, step=1000),
-            "merchant_type": st.column_config.SelectboxColumn(options=[MERCHANT_NORMAL, MERCHANT_KB_CVS3]),
-            "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
-        },
-    )
-    st.session_state.transactions = rows_to_txns(edited_txns)
-    save_app_state(st.session_state.promos, st.session_state.transactions)
+    if st.session_state.pending_calc:
+        data = st.session_state.pending_calc
+        st.subheader("🔍 결제 카드 선택")
 
-    if st.button("원장 초기화", type="secondary"):
-        st.session_state.transactions = []
+        for i, opt in enumerate(data["options"], start=1):
+            with st.container():
+                medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
+                rank_cls = f" rank-card rank-card-{i}" if i <= 3 else ""
+                st.markdown(
+                    (
+                        f"<div class='{rank_cls.strip()}'>"
+                        f"<div class='rank-title'><span class='rank-medal'>{medal}</span>{i}위. {opt['card_name']}</div>"
+                        f"<div class='rank-benefit'>예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
+                        f"(비교기준 JPY {opt['reward_jpy']:,.0f})</div>"
+                        f"<div class='compact-meta'>잔여 {opt['remaining_uses']} · 총한도 {opt['total_remain_text']} · 월한도 {opt['monthly_remain_text']}</div>"
+                        f"</div>"
+                    ),
+                    unsafe_allow_html=True,
+                )
+
+        labels = [
+            f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
+            for i, o in enumerate(data["options"])
+        ]
+        st.markdown("<div class='choice-title'>✔️ 실제 결제할 카드 선택</div>", unsafe_allow_html=True)
+        st.radio(
+            "카드 선택",
+            options=list(range(len(labels))),
+            format_func=lambda idx: labels[idx],
+            key="selected_option_idx",
+            label_visibility="collapsed",
+        )
+
+        col_done, col_cancel = st.columns(2)
+        with col_done:
+            if st.button("결제 완료", type="primary", use_container_width=True):
+                chosen = data["options"][st.session_state.selected_option_idx]
+                txns = st.session_state.transactions
+                new_id = f"txn-{len(txns)+1}-{int(dt.datetime.now().timestamp())}"
+                txns.append(
+                    Txn(
+                        txn_id=new_id,
+                        txn_date=dt.date.fromisoformat(data["pay_date"]),
+                        card_name=chosen["card_name"],
+                        amount_jpy=int(data["pay_jpy"]),
+                        merchant_type=data["merchant_type"],
+                        status="approved",
+                        memo="결제 완료 버튼으로 추가",
+                    )
+                )
+                st.session_state.transactions = txns
+                st.session_state.pending_calc = None
+                save_app_state(st.session_state.promos, st.session_state.transactions)
+                st.success("결제 내역이 원장에 추가되었습니다.")
+                st.rerun()
+        with col_cancel:
+            if st.button("취소", use_container_width=True):
+                st.session_state.pending_calc = None
+                st.info("결제 추가 없이 취소되었습니다.")
+                st.rerun()
+
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
+    with st.container():
+        st.subheader("📒 결제내역")
+        card_names = sorted({p.card_name for p in st.session_state.promos})
+        edited_txns = st.data_editor(
+            txn_rows(st.session_state.transactions),
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "txn_date": st.column_config.DateColumn(),
+                "card_name": st.column_config.SelectboxColumn(options=card_names),
+                "amount_jpy": st.column_config.NumberColumn(min_value=0, step=1000),
+                "merchant_type": st.column_config.SelectboxColumn(options=[MERCHANT_NORMAL, MERCHANT_KB_CVS3]),
+                "status": st.column_config.SelectboxColumn(options=["approved", "cancelled"]),
+            },
+        )
+        st.session_state.transactions = rows_to_txns(edited_txns)
         save_app_state(st.session_state.promos, st.session_state.transactions)
-        st.rerun()
 
-with st.container(border=True):
-    st.subheader("행사 리스트")
-    uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
-    if uploaded_csv is not None:
-        try:
-            st.session_state.promos = load_promos_from_csv(uploaded_csv)
+        if st.button("초기화", type="secondary"):
+            st.session_state.transactions = []
             save_app_state(st.session_state.promos, st.session_state.transactions)
-            st.success("CSV를 불러왔습니다.")
-        except Exception as exc:
-            st.error(f"CSV 파싱 실패: {exc}")
+            st.rerun()
 
-    edited_promos = st.data_editor(
-        promo_rows(st.session_state.promos),
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "reward_type": st.column_config.SelectboxColumn(options=["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"]),
-            "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "monthly_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "monthly_reward_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-            "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
-        },
-    )
-    st.session_state.promos = rows_to_promos(edited_promos)
-    save_app_state(st.session_state.promos, st.session_state.transactions)
+with tab_promo:
+    with st.container():
+        st.subheader("🏪 행사 관리")
 
-st.caption("배포용 참고: Streamlit Community Cloud에서 main 파일을 app.py로 지정하세요.")
+        with st.form("promo_add_form", clear_on_submit=True):
+            r1c1, r1c2 = st.columns(2)
+            with r1c1:
+                card_name = st.text_input("대상 카드", placeholder="예: KB UPI (가온 체크)")
+            with r1c2:
+                percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
+
+            r2c1, r2c2 = st.columns(2)
+            with r2c1:
+                reward_type = st.selectbox(
+                    "혜택 유형",
+                    ["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"],
+                )
+            with r2c2:
+                fixed_amount = st.number_input("정액 혜택", min_value=0.0, step=100.0, value=0.0)
+
+            r3c1, r3c2 = st.columns(2)
+            with r3c1:
+                start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
+            with r3c2:
+                max_reward_per_txn = st.number_input("건당 최대 혜택", min_value=0.0, step=100.0, value=0.0)
+
+            r4c1, r4c2 = st.columns(2)
+            with r4c1:
+                end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
+            with r4c2:
+                max_reward_cur = st.selectbox("건당 최대 혜택 통화", SUPPORTED_CURRENCIES, index=0)
+
+            r5c1, r5c2 = st.columns(2)
+            with r5c1:
+                min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
+            with r5c2:
+                max_uses = st.number_input("최대 사용 횟수", min_value=0, step=1, value=0)
+
+            r6c1, r6c2 = st.columns(2)
+            with r6c1:
+                min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
+            with r6c2:
+                merchant_type = st.selectbox("가맹점 유형", ["all", "kb_cvs3"])
+
+            submitted = st.form_submit_button("행사 추가", type="primary", use_container_width=True)
+
+            if submitted:
+                if not card_name.strip():
+                    st.warning("대상 카드명을 입력해 주세요.")
+                else:
+                    new_promo = CardPromo(
+                        card_name=card_name.strip(),
+                        enabled=True,
+                        reward_type=reward_type,
+                        start_date=start_date,
+                        end_date=end_date,
+                        min_amount=float(min_amount),
+                        min_currency=min_currency,
+                        percent_value=float(percent_value),
+                        fixed_amount=float(fixed_amount),
+                        max_reward_per_txn=float(max_reward_per_txn),
+                        max_reward_per_txn_currency=max_reward_cur,
+                        max_uses=int(max_uses),
+                        used_count=0,
+                        total_cap_amount=0.0,
+                        total_cap_currency="JPY",
+                        total_used_amount=0.0,
+                        monthly_spend_cap_amount=0.0,
+                        monthly_spend_cap_currency="KRW",
+                        monthly_spend_used_amount=0.0,
+                        monthly_reward_cap_amount=0.0,
+                        monthly_reward_cap_currency="KRW",
+                        monthly_reward_used_amount=0.0,
+                        merchant_type=merchant_type,
+                        formula_id="shinhan_the_more_v1" if reward_type == "formula_cashback" else "",
+                        formula_params_json="",
+                    )
+                    st.session_state.promos.append(new_promo)
+                    save_app_state(st.session_state.promos, st.session_state.transactions)
+                    st.success("행사가 추가되었습니다.")
+                    st.rerun()
+
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
+    with st.container():
+        st.subheader("📒 행사 리스트")
+        uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
+        if uploaded_csv is not None:
+            try:
+                st.session_state.promos = load_promos_from_csv(uploaded_csv)
+                save_app_state(st.session_state.promos, st.session_state.transactions)
+                st.success("CSV를 불러왔습니다.")
+            except Exception as exc:
+                st.error(f"CSV 파싱 실패: {exc}")
+
+        edited_promos = st.data_editor(
+            promo_rows(st.session_state.promos),
+            num_rows="dynamic",
+            use_container_width=True,
+            column_config={
+                "reward_type": st.column_config.SelectboxColumn(options=["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"]),
+                "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "monthly_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "monthly_reward_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
+                "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
+            },
+        )
+        st.session_state.promos = rows_to_promos(edited_promos)
+        save_app_state(st.session_state.promos, st.session_state.transactions)
+
+
