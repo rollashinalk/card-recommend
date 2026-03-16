@@ -360,6 +360,126 @@ def load_app_state() -> tuple[List[CardPromo], List[Txn]]:
         return seed_promotions(), seed_transactions()
 
 
+def inject_ui_theme() -> None:
+    st.markdown(
+        """
+        <style>
+        :root {
+            --bg: #f5f8ff;
+            --card: #ffffff;
+            --line: #dbe5f5;
+            --text: #111827;
+            --muted: #667085;
+            --primary: #3563ff;
+            --primary-dark: #274dd6;
+            --shadow: 0 16px 36px rgba(30, 64, 175, 0.10);
+            --radius: 18px;
+        }
+
+        .stApp {
+            background:
+                radial-gradient(circle at 12% -20%, #dbeafe 0%, transparent 45%),
+                radial-gradient(circle at 90% 8%, #e0e7ff 0%, transparent 30%),
+                var(--bg);
+            color: var(--text);
+        }
+
+        .main .block-container {
+            max-width: 920px;
+            padding-top: 1.6rem;
+            padding-bottom: 3rem;
+        }
+
+        .hero-banner {
+            border: 1px solid var(--line);
+            border-radius: 22px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+            box-shadow: var(--shadow);
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .hero-banner .eyebrow {
+            margin: 0;
+            color: #3555cc;
+            font-size: .76rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .hero-banner h1 {
+            margin: .2rem 0 .4rem;
+            font-size: clamp(1.5rem, 2.3vw, 2.1rem);
+            letter-spacing: -.02em;
+            line-height: 1.2;
+        }
+
+        .hero-banner p {
+            margin: 0;
+            color: var(--muted);
+            font-size: .95rem;
+        }
+
+        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: var(--radius);
+            border: 1px solid var(--line);
+            box-shadow: var(--shadow);
+            background: rgba(255,255,255,0.90);
+            backdrop-filter: blur(8px);
+        }
+
+        h2, h3 {
+            letter-spacing: -.01em;
+        }
+
+        div[data-baseweb="input"] input,
+        div[data-baseweb="select"] > div,
+        div[data-baseweb="base-input"] input,
+        textarea {
+            border-radius: 12px !important;
+            border-color: var(--line) !important;
+            min-height: 42px;
+        }
+
+        div[data-baseweb="input"] input:focus,
+        div[data-baseweb="base-input"] input:focus,
+        textarea:focus {
+            box-shadow: 0 0 0 3px rgba(53,99,255,.14);
+        }
+
+        .stButton > button {
+            border-radius: 12px;
+            min-height: 42px;
+            font-weight: 650;
+            border: 1px solid transparent;
+        }
+
+        .stButton > button[kind="primary"] {
+            color: #fff;
+            background: linear-gradient(180deg, #4d75ff 0%, #355ff3 100%);
+            border-color: #355ff3;
+        }
+
+        .stButton > button:hover {
+            filter: brightness(0.97);
+        }
+
+        div[data-testid="stRadio"] label p,
+        div[data-testid="stMarkdownContainer"] p {
+            color: var(--text);
+        }
+
+        @media (max-width: 768px) {
+            .main .block-container { padding-top: 1rem; }
+            .hero-banner { padding: 1rem; }
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
     text = uploaded_file.getvalue().decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(text))
@@ -397,8 +517,17 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
     return rows_to_promos(rows)
 
 
-st.title("💳 일본 결제 카드 추천")
-st.caption("결제내역 원장 기반으로 혜택 누적/취소 반영을 자동 계산합니다.")
+inject_ui_theme()
+st.markdown(
+    """
+    <div class="hero-banner">
+      <p class="eyebrow">Card Optimizer</p>
+      <h1>💳 일본 결제 카드 추천</h1>
+      <p>결제내역 원장 기반으로 혜택 누적/취소 반영을 자동 계산합니다.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 if "promos" not in st.session_state or "transactions" not in st.session_state:
     loaded_promos, loaded_txns = load_app_state()
