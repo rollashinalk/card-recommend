@@ -591,6 +591,10 @@ def inject_ui_theme() -> None:
             margin-right: 0.35rem;
         }
 
+        .section-spacer {
+            height: 1rem;
+        }
+
         @media (max-width: 768px) {
             .main .block-container { padding-top: 1rem; }
             .hero-banner { padding: 1rem; }
@@ -708,6 +712,8 @@ with tab_reco:
         else:
             st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
     with st.container():
         st.subheader("💴 결제 정보")
         if st.session_state.reset_pay_jpy:
@@ -724,6 +730,8 @@ with tab_reco:
         )
         pay_date = st.date_input("결제 날짜", value=dt.date.today())
         calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
+
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
     if calculate_clicked:
         if not fx_rates:
@@ -835,6 +843,8 @@ with tab_reco:
                 st.info("결제 추가 없이 취소되었습니다.")
                 st.rerun()
 
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
     with st.container():
         st.subheader("📒 결제내역 원장")
         card_names = sorted({p.card_name for p in st.session_state.promos})
@@ -863,23 +873,43 @@ with tab_promo:
         st.subheader("🏪 행사 관리")
 
         with st.form("promo_add_form", clear_on_submit=True):
-            c1, c2 = st.columns(2)
-            with c1:
+            r1c1, r1c2 = st.columns(2)
+            with r1c1:
                 card_name = st.text_input("대상 카드", placeholder="예: KB UPI (가온 체크)")
+            with r1c2:
+                percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
+
+            r2c1, r2c2 = st.columns(2)
+            with r2c1:
                 reward_type = st.selectbox(
                     "혜택 유형",
                     ["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"],
                 )
-                start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
-                end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
-                min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
-                min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
-            with c2:
-                percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
+            with r2c2:
                 fixed_amount = st.number_input("정액 혜택", min_value=0.0, step=100.0, value=0.0)
+
+            r3c1, r3c2 = st.columns(2)
+            with r3c1:
+                start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
+            with r3c2:
                 max_reward_per_txn = st.number_input("건당 최대 혜택", min_value=0.0, step=100.0, value=0.0)
+
+            r4c1, r4c2 = st.columns(2)
+            with r4c1:
+                end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
+            with r4c2:
                 max_reward_cur = st.selectbox("건당 최대 혜택 통화", SUPPORTED_CURRENCIES, index=0)
+
+            r5c1, r5c2 = st.columns(2)
+            with r5c1:
+                min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
+            with r5c2:
                 max_uses = st.number_input("최대 사용 횟수", min_value=0, step=1, value=0)
+
+            r6c1, r6c2 = st.columns(2)
+            with r6c1:
+                min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
+            with r6c2:
                 merchant_type = st.selectbox("가맹점 유형", ["all", "kb_cvs3"])
 
             submitted = st.form_submit_button("행사 추가", type="primary", use_container_width=True)
@@ -919,6 +949,8 @@ with tab_promo:
                     save_app_state(st.session_state.promos, st.session_state.transactions)
                     st.success("행사가 추가되었습니다.")
                     st.rerun()
+
+    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
     with st.container():
         st.subheader("📒 행사 리스트")
