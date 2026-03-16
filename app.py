@@ -403,8 +403,8 @@ def inject_ui_theme() -> None:
             border-radius: 22px;
             background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
             box-shadow: var(--shadow);
-            padding: 1.1rem 1.25rem;
-            margin-bottom: 0.75rem;
+            padding: 0.95rem 1.25rem;
+            margin-bottom: 0.55rem;
         }
 
         .hero-banner .eyebrow {
@@ -414,11 +414,12 @@ def inject_ui_theme() -> None:
             font-weight: 700;
             letter-spacing: .08em;
             text-transform: uppercase;
+            line-height: 1.2;
         }
 
         .hero-banner h1 {
-            margin: .2rem 0 .4rem;
-            font-size: clamp(1.5rem, 2.3vw, 2.1rem);
+            margin: .35rem 0;
+            font-size: clamp(1.42rem, 2.2vw, 2rem);
             letter-spacing: -.02em;
             line-height: 1.2;
             color: var(--text);
@@ -428,6 +429,12 @@ def inject_ui_theme() -> None:
             margin: 0;
             color: var(--muted);
             font-size: .95rem;
+        }
+
+        h2 {
+            font-size: clamp(0.98rem, 1.7vw, 1.16rem) !important;
+            line-height: 1.25;
+            margin-bottom: 0.5rem;
         }
 
         /* Streamlit container(border=True) wrappers */
@@ -671,7 +678,9 @@ def inject_ui_theme() -> None:
 
         @media (max-width: 768px) {
             .main .block-container { padding-top: 1rem; }
-            .hero-banner { padding: 1rem; }
+            .hero-banner { padding: 0.82rem 1rem; margin-bottom: 0.45rem; }
+            .hero-banner h1 { margin: 0.28rem 0; font-size: 1.92rem; }
+            h2 { font-size: 1.42rem !important; }
         }
         </style>
         """,
