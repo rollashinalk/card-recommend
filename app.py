@@ -439,6 +439,7 @@ with st.container(border=True):
         "결제 금액 (JPY)", min_value=0, step=1000, key="pay_jpy_input", format="%d"
     )
     pay_date = st.date_input("결제 날짜", value=dt.date.today())
+    calculate_clicked = st.button("최적 카드 계산", type="primary", use_container_width=True)
 
 with st.container(border=True):
     st.subheader("결제내역 원장 (취소관리 포함)")
@@ -492,7 +493,7 @@ with st.container(border=True):
     st.session_state.promos = rows_to_promos(edited_promos)
     save_app_state(st.session_state.promos, st.session_state.transactions)
 
-if st.button("최적 카드 계산", type="primary", use_container_width=True):
+if calculate_clicked:
     if not fx_rates:
         st.warning("환율을 불러온 뒤 다시 계산해 주세요.")
     elif pay_jpy <= 0:
