@@ -370,6 +370,7 @@ def inject_ui_theme() -> None:
 
         :root {
             --off-white: #F8FAFC;
+            --nova-blue: #0052FF;
             --electric-blue: #0052FF;
             --deep-navy: #0F172A;
             --muted: #475569;
@@ -408,7 +409,7 @@ def inject_ui_theme() -> None:
             font-weight: 700;
             letter-spacing: 0.06em;
             text-transform: uppercase;
-            color: var(--electric-blue);
+            color: var(--nova-blue);
         }
 
         .hero-banner h1 {
@@ -429,7 +430,7 @@ def inject_ui_theme() -> None:
 
         .rank-card {
             background: #ffffff;
-            border: none !important;
+            border: 1px solid #E2E8F0 !important;
             border-radius: var(--radius-card);
             padding: clamp(1.05rem, 2.8vw, 1.45rem);
             margin: 0.78rem 0;
@@ -441,6 +442,11 @@ def inject_ui_theme() -> None:
             transform: translateY(-3px);
             box-shadow: var(--card-shadow-hover);
         }
+
+        .rank-card-1 { background: rgba(0, 82, 255, 0.05) !important; border: 1.5px solid var(--nova-blue) !important; }
+        .rank-card-2 { background: rgba(124, 58, 237, 0.05) !important; border: 1px solid #DDD6FE !important; }
+        .rank-card-3 { background: rgba(16, 185, 129, 0.05) !important; border: 1px solid #D1FAE5 !important; }
+        .rank-card-plain { background: #ffffff !important; border: 1px solid #E2E8F0 !important; }
 
         .rank-title {
             font-size: clamp(1rem, 2.4vw, 1.2rem);
@@ -454,7 +460,7 @@ def inject_ui_theme() -> None:
         .rank-benefit {
             font-size: clamp(1.06rem, 3vw, 1.35rem);
             font-weight: 830;
-            color: var(--electric-blue);
+            color: var(--nova-blue);
             margin: 0.55rem 0 0.75rem;
             line-height: 1.3;
         }
@@ -513,6 +519,15 @@ def inject_ui_theme() -> None:
             color: var(--deep-navy) !important;
         }
 
+        button[role="tab"][aria-selected="true"] {
+            color: var(--nova-blue) !important;
+            border-bottom: 2px solid var(--nova-blue) !important;
+        }
+
+        [data-baseweb="tab-highlight"] {
+            background-color: var(--nova-blue) !important;
+        }
+
         .rate-updated {
             color: var(--muted);
             font-size: 0.82rem;
@@ -521,6 +536,23 @@ def inject_ui_theme() -> None:
 
         .section-spacer {
             height: 1rem;
+        }
+
+        div[data-testid="stForm"],
+        div[data-testid="stDataEditor"],
+        div[data-testid="stFileUploader"] {
+            background: #ffffff;
+            border-radius: var(--radius-card);
+            box-shadow: var(--card-shadow);
+            border: 1px solid #E2E8F0;
+            padding: clamp(0.8rem, 2.2vw, 1.2rem);
+        }
+
+        div[data-baseweb="input"],
+        div[data-baseweb="select"],
+        div[data-baseweb="base-input"],
+        [data-testid="stDateInput"] div[data-baseweb="input"] {
+            border-radius: 14px !important;
         }
 
         @media screen and (max-width: 768px) {
@@ -651,10 +683,18 @@ with tab_reco:
 
         fx_rates = st.session_state.fx_rates
         if fx_rates:
-            st.success(f"1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW")
-            if st.session_state.fx_updated_at:
-                updated_text = st.session_state.fx_updated_at.strftime("%Y-%m-%d %H:%M")
-                st.markdown(f"<div class='rate-updated'>마지막 업데이트: {updated_text}</div>", unsafe_allow_html=True)
+            updated_text = st.session_state.fx_updated_at.strftime("%Y-%m-%d %H:%M") if st.session_state.fx_updated_at else "-"
+            st.markdown(
+                f"""
+                <div style='background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 1.2rem; margin-top: 1rem; box-shadow: var(--card-shadow);'>
+                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 1.1rem;'>
+                        1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW
+                    </div>
+                    <div class='rate-updated'>업데이트: {updated_text}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
         else:
             st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
