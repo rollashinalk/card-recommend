@@ -369,96 +369,153 @@ def inject_ui_theme() -> None:
         @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
         :root {
-            --primary: #3563ff;
-            --bg-gradient: linear-gradient(135deg, #f5f8ff 0%, #ffffff 100%);
-            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
-            --radius-lg: 20px;
-            --radius-md: 12px;
+            --off-white: #F8FAFC;
+            --electric-blue: #0052FF;
+            --deep-navy: #0F172A;
+            --muted: #475569;
+            --card-shadow: 0 24px 48px rgba(15, 23, 42, 0.08);
+            --card-shadow-hover: 0 30px 60px rgba(15, 23, 42, 0.12);
+            --radius-card: 28px;
+            --radius-pill: 999px;
         }
 
-        * { font-family: 'Pretendard', sans-serif !important; }
+        * {
+            font-family: 'Pretendard', sans-serif !important;
+        }
 
-        [data-testid="stAppViewContainer"] {
-            background: var(--bg-gradient) !important;
+        html, body, [data-testid="stAppViewContainer"], .stApp {
+            background: var(--off-white) !important;
+            color: var(--deep-navy) !important;
         }
 
         .main .block-container {
-            max-width: 800px;
-            padding: clamp(1rem, 5vw, 2.5rem);
+            max-width: 900px;
+            padding: clamp(1rem, 4vw, 2.8rem);
         }
 
         .hero-banner {
             background: #ffffff;
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            margin-bottom: 2rem;
+            border-radius: var(--radius-card);
+            padding: clamp(1.1rem, 2.8vw, 2rem);
+            margin-bottom: clamp(1.1rem, 2.6vw, 2rem);
             box-shadow: var(--card-shadow);
-            border: 1px solid #edf2f7;
             text-align: center;
         }
 
+        .hero-banner .eyebrow {
+            margin: 0;
+            font-size: clamp(0.75rem, 1.4vw, 0.92rem);
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--electric-blue);
+        }
+
         .hero-banner h1 {
-            font-size: clamp(1.5rem, 6vw, 2.2rem) !important;
-            font-weight: 800 !important;
-            color: #1a202c;
-            margin-top: 0.5rem !important;
+            font-size: clamp(1.7rem, 6vw, 3.1rem) !important;
+            font-weight: 850 !important;
+            letter-spacing: -0.05em !important;
+            line-height: 1.03 !important;
+            color: var(--deep-navy) !important;
+            margin: clamp(0.45rem, 1.6vw, 0.75rem) 0 0 !important;
+        }
+
+        [data-testid="stHeadingWithActionElements"] h2,
+        [data-testid="stHeadingWithActionElements"] h3 {
+            color: var(--deep-navy) !important;
+            letter-spacing: -0.03em;
+            font-size: clamp(1.25rem, 3.2vw, 1.8rem) !important;
         }
 
         .rank-card {
-            border-radius: var(--radius-md);
-            padding: 1.25rem;
-            margin: 0.75rem 0;
-            transition: transform 0.2s;
-            border: 1px solid transparent;
+            background: #ffffff;
+            border: none !important;
+            border-radius: var(--radius-card);
+            padding: clamp(1.05rem, 2.8vw, 1.45rem);
+            margin: 0.78rem 0;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
 
-        .rank-card:hover { transform: translateY(-2px); }
-
-        .rank-card-1 { background: #f0f7ff; border-color: #3563ff; }
-        .rank-card-2, .rank-card-3 { background: #ffffff; border-color: #e2e8f0; }
-        .rank-card-plain { background: #ffffff; border-color: #f7fafc; }
+        .rank-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow-hover);
+        }
 
         .rank-title {
-            font-size: 1.1rem;
-            font-weight: 700;
+            font-size: clamp(1rem, 2.4vw, 1.2rem);
+            font-weight: 760;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.5rem;
+            color: var(--deep-navy);
         }
 
         .rank-benefit {
-            font-size: 1.2rem;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 0.5rem 0;
+            font-size: clamp(1.06rem, 3vw, 1.35rem);
+            font-weight: 830;
+            color: var(--electric-blue);
+            margin: 0.55rem 0 0.75rem;
+            line-height: 1.3;
         }
 
         .compact-meta {
-            font-size: 0.85rem;
-            color: #718096;
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 0.46rem;
+        }
+
+        .meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: var(--radius-pill);
+            background: rgba(0, 82, 255, 0.08);
+            color: #1e3a8a;
+            font-size: clamp(0.78rem, 2vw, 0.9rem);
+            font-weight: 620;
+            line-height: 1;
+            padding: 0.5rem 0.78rem;
+            white-space: nowrap;
         }
 
         .stButton > button {
-            height: 54px !important;
-            font-size: 1.1rem !important;
-            border-radius: var(--radius-md) !important;
+            min-height: 54px !important;
+            border-radius: 14px !important;
+            font-size: clamp(0.98rem, 2.2vw, 1.08rem) !important;
+            font-weight: 700 !important;
+            transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease !important;
+        }
+
+        .stButton > button[kind="primary"],
+        .stButton > button[data-testid="baseButton-primary"],
+        [data-testid="stFormSubmitButton"] > button[kind="primary"] {
+            background: var(--deep-navy) !important;
+            color: #ffffff !important;
+            border: none !important;
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25) !important;
+        }
+
+        .stButton > button[kind="primary"]:hover,
+        .stButton > button[data-testid="baseButton-primary"]:hover,
+        [data-testid="stFormSubmitButton"] > button[kind="primary"]:hover {
+            background: var(--electric-blue) !important;
+            transform: scale(1.02);
         }
 
         div[data-baseweb="input"] {
-            border-radius: var(--radius-md) !important;
+            border-radius: 14px !important;
         }
 
         button[role="tab"] {
-            font-size: 1rem !important;
-            height: 48px !important;
+            font-size: clamp(0.9rem, 2vw, 1rem) !important;
+            height: 46px !important;
+            color: var(--deep-navy) !important;
         }
 
         .rate-updated {
-            color: #64748b;
-            font-size: .82rem;
+            color: var(--muted);
+            font-size: 0.82rem;
             margin-top: 0.2rem;
         }
 
@@ -471,9 +528,21 @@ def inject_ui_theme() -> None:
                 padding: 1rem;
             }
 
+            .hero-banner {
+                border-radius: 22px;
+            }
+
+            .rank-card {
+                border-radius: 22px;
+            }
+
+            .meta-badge {
+                white-space: normal;
+            }
+
             [data-testid="stHorizontalBlock"] {
                 flex-direction: column;
-                gap: 0.6rem;
+                gap: 0.65rem;
             }
         }
         </style>
@@ -676,11 +745,13 @@ with tab_reco:
                     (
                         f"<div class='{rank_cls.strip()}'>"
                         f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}</div>"
-                        f"<div class='rank-benefit'>{format_money(opt['reward_native'], opt['reward_currency'])} 혜택 "
-                        f"(비교기준 JPY {opt['reward_jpy']:,.0f})</div>"
-                        f"<div class='compact-meta'><span>🚩 {opt['remaining_uses']}회 남음</span>"
-                        f"<span>💰 총한도: {opt['total_remain_text']}</span>"
-                        f"<span>📅 월한도: {opt['monthly_remain_text']}</span></div>"
+                        f"<div class='rank-benefit'>{format_money(opt['reward_native'], opt['reward_currency'])} 혜택</div>"
+                        f"<div class='compact-meta'>"
+                        f"<span class='meta-badge'>🚩 {opt['remaining_uses']}회 남음</span>"
+                        f"<span class='meta-badge'>🧮 비교 JPY {opt['reward_jpy']:,.0f}</span>"
+                        f"<span class='meta-badge'>💰 총한도 {opt['total_remain_text']}</span>"
+                        f"<span class='meta-badge'>📅 월한도 {opt['monthly_remain_text']}</span>"
+                        f"</div>"
                         f"</div>"
                     ),
                     unsafe_allow_html=True,
