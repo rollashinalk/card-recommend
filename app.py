@@ -544,11 +544,13 @@ def inject_ui_theme() -> None:
             background: white;
             border: 1px solid #E2E8F0;
             border-radius: 16px;
-            padding: 0.7rem 1rem;
+            padding: 0.75rem 1rem 1rem;
             box-shadow: var(--card-shadow);
             align-items: center;
             margin-top: 0.3rem;
             gap: 0.3rem;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
         }
 
         [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"]:first-child {
