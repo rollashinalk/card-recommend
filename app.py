@@ -563,6 +563,7 @@ def inject_ui_theme() -> None:
             display: flex;
             justify-content: flex-end;
             align-items: center;
+            padding-right: 0.4rem !important;
         }
 
         .st-key-fx_refresh_small button {
@@ -573,7 +574,6 @@ def inject_ui_theme() -> None:
             background: transparent !important;
             font-size: 1.2rem !important;
             box-shadow: none !important;
-            margin-right: 0.35rem !important;
         }
 
         div[data-testid="stForm"],
