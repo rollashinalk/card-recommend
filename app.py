@@ -694,12 +694,14 @@ with tab_reco:
 
         fx_rates = st.session_state.fx_rates
         if fx_rates:
+            jpy_to_krw = (fx_rates['KRW'] / fx_rates['JPY']) * 100
             updated_text = st.session_state.fx_updated_at.strftime("%Y-%m-%d %H:%M") if st.session_state.fx_updated_at else "-"
             st.markdown(
                 f"""
                 <div style='background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 1.2rem; margin-top: 1rem; box-shadow: var(--card-shadow);'>
-                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 1.1rem;'>
-                        1 USD = {fx_rates['JPY']:,.2f} JPY | 1 USD = {fx_rates['KRW']:,.2f} KRW
+                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 1.1rem; line-height: 1.5;'>
+                        <div>1 USD = {fx_rates['JPY']:,.2f} JPY</div>
+                        <div>100 JPY = {jpy_to_krw:,.2f} KRW</div>
                     </div>
                     <div class='rate-updated'>업데이트: {updated_text}</div>
                 </div>
