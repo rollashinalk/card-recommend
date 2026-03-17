@@ -439,6 +439,7 @@ def inject_ui_theme() -> None:
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             overflow: hidden !important;
+            position: relative;
             transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
 
@@ -462,16 +463,21 @@ def inject_ui_theme() -> None:
 
         [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:first-child {
             flex: 1 1 auto !important;
+            padding-right: 52px !important;
         }
         [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:last-child {
-            flex: 0 0 56px !important;
-            width: 56px !important;
-            min-width: 56px !important;
-            max-width: 56px !important;
+            position: absolute !important;
+            right: clamp(0.8rem, 2.5vw, 1.2rem) !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            width: auto !important;
+            min-width: unset !important;
+            max-width: none !important;
+            flex: none !important;
+            padding: 0 !important;
             display: flex;
-            justify-content: center;
             align-items: center;
-            padding: 0 10px 0 4px !important;
+            justify-content: center;
         }
 
         [class*="st-key-card_select_"] button {
