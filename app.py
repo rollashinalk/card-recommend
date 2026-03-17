@@ -573,6 +573,7 @@ def inject_ui_theme() -> None:
             background: transparent !important;
             font-size: 1.2rem !important;
             box-shadow: none !important;
+            margin-right: 0.35rem !important;
         }
 
         div[data-testid="stForm"],
