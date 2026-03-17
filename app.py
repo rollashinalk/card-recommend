@@ -587,6 +587,17 @@ def inject_ui_theme() -> None:
                 width: 100% !important;
                 flex: 1 1 100% !important;
             }
+
+            .fx-header-row [data-testid="stHorizontalBlock"] {
+                flex-direction: row !important;
+                align-items: flex-end;
+                gap: 0.5rem;
+            }
+
+            .fx-header-row [data-testid="column"] {
+                width: auto !important;
+                flex: 1 1 0 !important;
+            }
         }
         </style>
         """,
@@ -682,11 +693,13 @@ tab_reco, tab_promo = st.tabs(["💳 카드 추천", "🏪 행사 관리"])
 
 with tab_reco:
     with st.container():
-        left, right = st.columns([2, 1])
-        with left:
-            st.subheader("💱 실시간 환율")
-        with right:
-            refresh = st.button("환율 새로고침", use_container_width=True)
+        st.markdown("<div class='fx-header-row'>", unsafe_allow_html=True)
+        h_col1, h_col2 = st.columns([1.5, 1], gap="small")
+        with h_col1:
+            st.markdown("<p style='margin: 10px 0 0 5px; font-weight: 800; font-size: 1.1rem;'>💱 실시간 환율</p>", unsafe_allow_html=True)
+        with h_col2:
+            refresh = st.button("새로고침", use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
         if refresh or "fx_rates" not in st.session_state:
             st.session_state.fx_rates = get_fx_rates()
@@ -695,15 +708,15 @@ with tab_reco:
         fx_rates = st.session_state.fx_rates
         if fx_rates:
             jpy_to_krw = (fx_rates['KRW'] / fx_rates['JPY']) * 100
-            updated_text = st.session_state.fx_updated_at.strftime("%Y-%m-%d %H:%M") if st.session_state.fx_updated_at else "-"
+            updated_text = st.session_state.fx_updated_at.strftime("%H:%M") if st.session_state.fx_updated_at else "-"
             st.markdown(
                 f"""
-                <div style='background: white; border: 1px solid #E2E8F0; border-radius: 16px; padding: 1.2rem; margin-top: 1rem; box-shadow: var(--card-shadow);'>
-                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 1.1rem; line-height: 1.5;'>
+                <div style='background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 0.7rem 1rem; margin-top: 0.4rem; box-shadow: var(--card-shadow);'>
+                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 0.95rem; line-height: 1.4;'>
                         <div>1 USD = {fx_rates['JPY']:,.2f} JPY</div>
                         <div>100 JPY = {jpy_to_krw:,.2f} KRW</div>
                     </div>
-                    <div class='rate-updated'>업데이트: {updated_text}</div>
+                    <div style='color: #64748b; font-size: 0.75rem; margin-top: 3px;'>업데이트: {updated_text}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
