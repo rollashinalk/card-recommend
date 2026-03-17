@@ -464,14 +464,14 @@ def inject_ui_theme() -> None:
             flex: 1 1 auto !important;
         }
         [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:last-child {
-            flex: 0 0 48px !important;
-            width: 48px !important;
-            min-width: 48px !important;
-            max-width: 48px !important;
+            flex: 0 0 56px !important;
+            width: 56px !important;
+            min-width: 56px !important;
+            max-width: 56px !important;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 0 !important;
+            padding: 0 10px 0 4px !important;
         }
 
         [class*="st-key-card_select_"] button {
