@@ -366,337 +366,115 @@ def inject_ui_theme() -> None:
     st.markdown(
         """
         <style>
-        :root,
-        [data-theme="light"],
-        [data-theme="dark"] {
-            color-scheme: light;
-            --primary-color: #3563ff !important;
-            --link-color: #3563ff !important;
-            --bg: #f5f8ff;
-            --card: #ffffff;
-            --line: #dbe5f5;
-            --text: #111827;
-            --muted: #667085;
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        :root {
             --primary: #3563ff;
-            --primary-dark: #274dd6;
-            --primary-soft: #eaf0ff;
-            --shadow: 0 16px 36px rgba(30, 64, 175, 0.10);
-            --radius: 18px;
+            --bg-gradient: linear-gradient(135deg, #f5f8ff 0%, #ffffff 100%);
+            --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+            --radius-lg: 20px;
+            --radius-md: 12px;
         }
 
-        html, body, [data-testid="stAppViewContainer"], .stApp {
-            background:
-                radial-gradient(circle at 12% -20%, #dbeafe 0%, transparent 45%),
-                radial-gradient(circle at 90% 8%, #e0e7ff 0%, transparent 30%),
-                var(--bg) !important;
-            color: var(--text) !important;
+        * { font-family: 'Pretendard', sans-serif !important; }
+
+        [data-testid="stAppViewContainer"] {
+            background: var(--bg-gradient) !important;
         }
 
         .main .block-container {
-            max-width: 920px;
-            padding-top: clamp(0.9rem, 1.8vw, 1.6rem);
-            padding-bottom: clamp(1.8rem, 3.5vw, 3rem);
+            max-width: 800px;
+            padding: clamp(1rem, 5vw, 2.5rem);
         }
 
         .hero-banner {
-            border: 1px solid var(--line);
-            border-radius: 22px;
-            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-            box-shadow: var(--shadow);
-            padding: clamp(0.78rem, 1.9vw, 1.02rem) clamp(0.9rem, 2.2vw, 1.25rem) !important;
-            margin-bottom: clamp(0.3rem, 1vw, 0.55rem) !important;
-        }
-
-        .hero-banner .eyebrow {
-            margin: 0;
-            color: #3555cc;
-            font-size: clamp(0.64rem, 0.9vw, 0.76rem);
-            font-weight: 700;
-            letter-spacing: .08em;
-            text-transform: uppercase;
-            line-height: 1.2;
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--card-shadow);
+            border: 1px solid #edf2f7;
+            text-align: center;
         }
 
         .hero-banner h1 {
-            margin: 0.08rem 0 0.34rem !important;
-            font-size: clamp(1.35rem, 4.3vw, 1.95rem) !important;
-            letter-spacing: -.02em;
-            line-height: 1.1 !important;
-            color: var(--text);
-        }
-
-        .hero-banner p {
-            margin: 0;
-            color: var(--muted);
-            font-size: .95rem;
-        }
-
-        [data-testid="stHeadingWithActionElements"] h2,
-        [data-testid="stHeadingWithActionElements"] h3 {
-            font-size: clamp(1.35rem, 4.3vw, 1.95rem) !important;
-            line-height: 1.12 !important;
-            margin-bottom: 0.28rem !important;
-            letter-spacing: -0.02em;
-        }
-
-        /* Streamlit container(border=True) wrappers */
-        [data-testid="stVerticalBlockBorderWrapper"],
-        [data-testid="stVerticalBlockBorderWrapper"] > div,
-        [data-testid="stVerticalBlockBorderWrapper"] > div > div {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            background: transparent !important;
-        }
-
-        [data-testid="stVerticalBlockBorderWrapper"]::before,
-        [data-testid="stVerticalBlockBorderWrapper"]::after {
-            display: none !important;
-            border: 0 !important;
-        }
-
-        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
-            border-radius: calc(var(--radius) + 2px);
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            background: rgba(255,255,255,0.55) !important;
-            backdrop-filter: blur(10px);
-            padding: 0.2rem 0.3rem;
-        }
-
-        /* st.form outer frame 제거 */
-        [data-testid="stForm"],
-        .stForm {
-            border: none !important;
-            outline: none !important;
-            box-shadow: none !important;
-            background: transparent !important;
-        }
-
-        h1, h2, h3, label, p, li, span,
-        div[data-testid="stMarkdownContainer"] p,
-        div[data-testid="stRadio"] label p,
-        div[data-testid="stCaptionContainer"] p {
-            color: var(--text) !important;
-        }
-
-        div[data-testid="stCaptionContainer"] p,
-        .stCaption p {
-            color: var(--muted) !important;
-        }
-
-
-        input[type="radio"],
-        input[type="checkbox"] {
-            accent-color: var(--primary) !important;
-        }
-
-        div[data-baseweb="input"] input,
-        div[data-baseweb="select"] > div,
-        div[data-baseweb="base-input"] input,
-        textarea {
-            border-radius: 12px !important;
-            border-color: rgba(198, 212, 236, 0.65) !important;
-            background: #fff !important;
-            color: var(--text) !important;
-            min-height: 42px;
-        }
-
-        div[data-baseweb="input"] input:focus,
-        div[data-baseweb="base-input"] input:focus,
-        textarea:focus {
-            box-shadow: 0 0 0 3px rgba(53,99,255,.14);
-        }
-
-        .stButton > button,
-        [data-testid="stFormSubmitButton"] > button {
-            border-radius: 12px;
-            min-height: 42px;
-            font-weight: 650;
-            border: none !important;
-            background: var(--primary-soft) !important;
-            color: #2b3f87 !important;
-        }
-
-        .stButton > button[kind="primary"],
-        .stButton > button[data-testid="baseButton-primary"],
-        [data-testid="stFormSubmitButton"] > button,
-        [data-testid="stFormSubmitButton"] > button[kind="primary"] {
-            color: #ffffff !important;
-            -webkit-text-fill-color: #ffffff !important;
-            background: linear-gradient(180deg, #4d75ff 0%, #355ff3 100%) !important;
-            border-color: #355ff3 !important;
-        }
-
-        .stButton > button:hover,
-        [data-testid="stFormSubmitButton"] > button:hover {
-            filter: brightness(0.97);
-        }
-
-        div[data-baseweb="tab-list"] {
-            background: transparent !important;
-            gap: 0.25rem;
-            border-bottom: none;
-            padding-bottom: 0.1rem;
-        }
-
-        [data-baseweb="tab"] {
-            background: transparent !important;
-        }
-
-        button[role="tab"],
-        [data-baseweb="tab"] > button {
-            border: 0 !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            border-radius: 0 !important;
-            color: #445172 !important;
-            padding: 0.45rem 0.7rem;
-        }
-
-        button[role="tab"][aria-selected="true"],
-        [data-baseweb="tab"] > button[aria-selected="true"] {
-            background: transparent !important;
-            color: #2f4dbe !important;
-            font-weight: 700;
-            border-bottom: 2px solid rgba(53, 99, 255, 0.65) !important;
-        }
-
-        [data-baseweb="tab-highlight"] {
-            background: var(--primary) !important;
-            height: 2px !important;
-        }
-
-        div[data-testid="stAlert"],
-        div[data-baseweb="notification"] {
-            border-radius: 12px;
-            border: none !important;
-            background: rgba(255, 255, 255, 0.56) !important;
-            box-shadow: none !important;
-        }
-
-        div[data-testid="stDataFrame"], div[data-testid="stDataEditor"] {
-            border-radius: 12px;
-            border: none !important;
-            overflow: hidden;
-            box-shadow: none !important;
-            background: rgba(255,255,255,0.74);
-        }
-
-        div[data-testid="stVerticalBlock"] div[data-testid="stVerticalBlockBorderWrapper"] {
-            margin-bottom: 1rem;
-        }
-
-        .compact-meta {
-            color: var(--muted);
-            font-size: 0.83rem;
-            line-height: 1.4;
-        }
-
-        .rate-updated {
-            color: var(--muted);
-            font-size: 0.78rem;
-            margin-top: 0.1rem;
-        }
-
-        .rank-medal {
-            margin-right: 0.35rem;
+            font-size: clamp(1.5rem, 6vw, 2.2rem) !important;
+            font-weight: 800 !important;
+            color: #1a202c;
+            margin-top: 0.5rem !important;
         }
 
         .rank-card {
-            border-radius: 14px;
-            padding: 0.9rem 1rem;
-            margin: 0.38rem 0;
-            width: 100%;
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            margin: 0.75rem 0;
+            transition: transform 0.2s;
+            border: 1px solid transparent;
         }
 
-        .rank-card-plain { background: transparent; }
-        .rank-card-1 { background: rgba(79, 120, 255, 0.12); }
-        .rank-card-2 { background: rgba(128, 92, 255, 0.10); }
-        .rank-card-3 { background: rgba(66, 182, 175, 0.12); }
+        .rank-card:hover { transform: translateY(-2px); }
+
+        .rank-card-1 { background: #f0f7ff; border-color: #3563ff; }
+        .rank-card-2, .rank-card-3 { background: #ffffff; border-color: #e2e8f0; }
+        .rank-card-plain { background: #ffffff; border-color: #f7fafc; }
+
         .rank-title {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            margin-bottom: 0.35rem;
-            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
         .rank-benefit {
-            font-size: 0.98rem;
-            margin-bottom: 0.3rem;
-            color: #1f2937;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0.5rem 0;
         }
 
-        /* 기본 라디오는 배경 없음 */
-        div[data-testid="stRadio"] {
-            background: transparent !important;
-            padding: 0 !important;
-            border-radius: 0 !important;
+        .compact-meta {
+            font-size: 0.85rem;
+            color: #718096;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        /* 결제카드 선택 라디오(key=selected_option_idx): 타이틀+옵션을 하나의 박스로 */
-        [data-testid="stElementContainer"].st-key-selected_option_idx,
-        [data-testid="stElementContainer"].st-key-selected_option_idx > div {
-            width: 100% !important;
-            max-width: 100% !important;
-            display: block !important;
+        .stButton > button {
+            height: 54px !important;
+            font-size: 1.1rem !important;
+            border-radius: var(--radius-md) !important;
         }
 
-        .st-key-selected_option_idx div[data-testid="stRadio"] {
-            background: rgba(255,255,255,0.56) !important;
-            border-radius: 16px !important;
-            overflow: hidden;
-            padding: 0.85rem 0.75rem 0.45rem !important;
-            margin-top: 0.95rem;
-            width: 100% !important;
-            max-width: 100% !important;
-            display: block !important;
-            box-sizing: border-box;
+        div[data-baseweb="input"] {
+            border-radius: var(--radius-md) !important;
         }
 
-        .st-key-selected_option_idx [data-testid="stWidgetLabel"] p {
-            font-size: 1.28rem !important;
-            font-weight: 700 !important;
-            margin-bottom: 0.55rem !important;
+        button[role="tab"] {
+            font-size: 1rem !important;
+            height: 48px !important;
         }
 
-        .st-key-selected_option_idx div[data-testid="stRadio"] label {
-            background: transparent !important;
-            border-radius: 0;
-            padding: 0.22rem 0.2rem;
-            margin-bottom: 0.25rem;
-        }
-
-        /* 가맹점 라디오는 명시적으로 배경 제거 */
-        .st-key-merchant_type_input div[data-testid="stRadio"] {
-            background: transparent !important;
-            padding: 0 !important;
-            border-radius: 0 !important;
+        .rate-updated {
+            color: #64748b;
+            font-size: .82rem;
+            margin-top: 0.2rem;
         }
 
         .section-spacer {
             height: 1rem;
         }
 
-        @media screen and (max-width: 1700px) {
-            .main .block-container { padding-top: 0.95rem; }
-            [data-testid="stHeadingWithActionElements"] h2,
-            [data-testid="stHeadingWithActionElements"] h3 { font-size: clamp(1.24rem, 3.6vw, 1.62rem) !important; }
-        }
-
-        @media screen and (max-width: 1100px) {
-            .main .block-container { padding-top: 0.82rem; }
-            .hero-banner { padding: 0.66rem 0.88rem !important; margin-bottom: 0.28rem !important; }
-            .hero-banner h1 { margin: 0.06rem 0 0.24rem !important; font-size: clamp(1.18rem, 4.2vw, 1.52rem) !important; }
-            [data-testid="stHeadingWithActionElements"] h2,
-            [data-testid="stHeadingWithActionElements"] h3 { font-size: clamp(1.18rem, 4.2vw, 1.52rem) !important; margin-bottom: 0.24rem !important; }
-        }
-
         @media screen and (max-width: 768px) {
-            .hero-banner { padding: 0.48rem 0.78rem !important; }
-            .hero-banner h1 { font-size: clamp(1.14rem, 6.2vw, 1.42rem) !important; }
-            [data-testid="stHeadingWithActionElements"] h2,
-            [data-testid="stHeadingWithActionElements"] h3 { font-size: clamp(1.14rem, 6.2vw, 1.42rem) !important; }
+            .main .block-container {
+                padding: 1rem;
+            }
+
+            [data-testid="stHorizontalBlock"] {
+                flex-direction: column;
+                gap: 0.6rem;
+            }
         }
         </style>
         """,
@@ -897,10 +675,12 @@ with tab_reco:
                 st.markdown(
                     (
                         f"<div class='{rank_cls.strip()}'>"
-                        f"<div class='rank-title'><span class='rank-medal'>{medal}</span>{i}위. {opt['card_name']}</div>"
-                        f"<div class='rank-benefit'>예상 혜택: {format_money(opt['reward_native'], opt['reward_currency'])} "
+                        f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}</div>"
+                        f"<div class='rank-benefit'>{format_money(opt['reward_native'], opt['reward_currency'])} 혜택 "
                         f"(비교기준 JPY {opt['reward_jpy']:,.0f})</div>"
-                        f"<div class='compact-meta'>잔여 {opt['remaining_uses']} · 총한도 {opt['total_remain_text']} · 월한도 {opt['monthly_remain_text']}</div>"
+                        f"<div class='compact-meta'><span>🚩 {opt['remaining_uses']}회 남음</span>"
+                        f"<span>💰 총한도: {opt['total_remain_text']}</span>"
+                        f"<span>📅 월한도: {opt['monthly_remain_text']}</span></div>"
                         f"</div>"
                     ),
                     unsafe_allow_html=True,
@@ -1081,5 +861,4 @@ with tab_promo:
         )
         st.session_state.promos = rows_to_promos(edited_promos)
         save_app_state(st.session_state.promos, st.session_state.transactions)
-
 
