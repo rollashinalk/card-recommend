@@ -473,28 +473,18 @@ def inject_ui_theme() -> None:
         }
 
         [class*="st-key-card_select_"] button {
-            min-height: 28px !important;
-            height: 28px !important;
-            padding: 0 10px !important;
-            font-size: 0.78rem !important;
-            font-weight: 600 !important;
-            border-radius: 99px !important;
-            border: 1.5px solid #CBD5E1 !important;
+            min-height: 32px !important;
+            height: 32px !important;
+            width: 32px !important;
+            padding: 0 !important;
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            border-radius: 50% !important;
+            border: 2px solid #CBD5E1 !important;
             background: transparent !important;
-            color: #64748B !important;
+            color: #CBD5E1 !important;
             box-shadow: none !important;
-        }
-
-        .rank-card-selected-badge {
-            display: inline-block;
-            background: #0052FF;
-            color: #ffffff;
-            font-size: 0.72rem;
-            font-weight: 700;
-            padding: 2px 8px;
-            border-radius: 99px;
-            float: right;
-            margin-top: -2px;
+            flex-shrink: 0 !important;
         }
 
         .rank-title {
@@ -881,12 +871,11 @@ with tab_reco:
             idx = i - 1
             is_selected = (idx == st.session_state.selected_option_idx)
             medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
-            badge_html = "<span class='rank-card-selected-badge'>✓ 선택됨</span>" if is_selected else ""
-            col_info, col_btn = st.columns([10, 1.2], gap="small")
+            col_info, col_btn = st.columns([10, 0.8], gap="small")
             with col_info:
                 st.markdown(
                     (
-                        f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}{badge_html}</div>"
+                        f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}</div>"
                         f"<div class='rank-benefit'>{format_money(opt['reward_native'], opt['reward_currency'])} 혜택</div>"
                         f"<div class='compact-meta'>"
                         f"<span class='meta-badge'>🚩 {opt['remaining_uses']}회 남음</span>"
@@ -898,7 +887,7 @@ with tab_reco:
                     unsafe_allow_html=True,
                 )
             with col_btn:
-                btn_label = "✓" if is_selected else "선택"
+                btn_label = "✓" if is_selected else "○"
                 if st.button(btn_label, key=f"card_select_{idx}", use_container_width=False):
                     st.session_state.selected_option_idx = idx
                     st.rerun()
