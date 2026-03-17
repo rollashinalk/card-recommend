@@ -494,19 +494,21 @@ def inject_ui_theme() -> None:
         }
 
         .stButton > button[kind="primary"],
-        .stButton > button[data-testid="baseButton-primary"],
-        [data-testid="stFormSubmitButton"] > button[kind="primary"] {
+        button[data-testid="baseButton-primary"],
+        div[data-testid="stFormSubmitButton"] button {
             background: var(--deep-navy) !important;
             color: #ffffff !important;
             border: none !important;
-            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.25) !important;
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.2) !important;
+            transition: all 0.2s ease !important;
         }
 
         .stButton > button[kind="primary"]:hover,
-        .stButton > button[data-testid="baseButton-primary"]:hover,
-        [data-testid="stFormSubmitButton"] > button[kind="primary"]:hover {
+        button[data-testid="baseButton-primary"]:hover,
+        div[data-testid="stFormSubmitButton"] button:hover {
             background: var(--electric-blue) !important;
-            transform: scale(1.02);
+            transform: scale(1.02) !important;
+            box-shadow: 0 15px 30px rgba(0, 82, 255, 0.3) !important;
         }
 
         div[data-baseweb="input"] {
@@ -541,11 +543,15 @@ def inject_ui_theme() -> None:
         div[data-testid="stForm"],
         div[data-testid="stDataEditor"],
         div[data-testid="stFileUploader"] {
-            background: #ffffff;
+            background: #ffffff !important;
             border-radius: var(--radius-card);
             box-shadow: var(--card-shadow);
             border: 1px solid #E2E8F0;
             padding: clamp(0.8rem, 2.2vw, 1.2rem);
+        }
+
+        div[data-testid="stDataEditor"] {
+            overflow: hidden;
         }
 
         div[data-baseweb="input"],
@@ -574,7 +580,12 @@ def inject_ui_theme() -> None:
 
             [data-testid="stHorizontalBlock"] {
                 flex-direction: column;
-                gap: 0.65rem;
+                gap: 0.8rem;
+            }
+
+            [data-testid="column"] {
+                width: 100% !important;
+                flex: 1 1 100% !important;
             }
         }
         </style>
@@ -865,14 +876,16 @@ with tab_promo:
     with st.container():
         st.subheader("🏪 행사 관리")
 
+        st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
+
         with st.form("promo_add_form", clear_on_submit=True):
-            r1c1, r1c2 = st.columns(2)
+            r1c1, r1c2 = st.columns(2, gap="large")
             with r1c1:
                 card_name = st.text_input("대상 카드", placeholder="예: KB UPI (가온 체크)")
             with r1c2:
                 percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
 
-            r2c1, r2c2 = st.columns(2)
+            r2c1, r2c2 = st.columns(2, gap="large")
             with r2c1:
                 reward_type = st.selectbox(
                     "혜택 유형",
@@ -881,25 +894,25 @@ with tab_promo:
             with r2c2:
                 fixed_amount = st.number_input("정액 혜택", min_value=0.0, step=100.0, value=0.0)
 
-            r3c1, r3c2 = st.columns(2)
+            r3c1, r3c2 = st.columns(2, gap="large")
             with r3c1:
                 start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
             with r3c2:
                 max_reward_per_txn = st.number_input("건당 최대 혜택", min_value=0.0, step=100.0, value=0.0)
 
-            r4c1, r4c2 = st.columns(2)
+            r4c1, r4c2 = st.columns(2, gap="large")
             with r4c1:
                 end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
             with r4c2:
                 max_reward_cur = st.selectbox("건당 최대 혜택 통화", SUPPORTED_CURRENCIES, index=0)
 
-            r5c1, r5c2 = st.columns(2)
+            r5c1, r5c2 = st.columns(2, gap="large")
             with r5c1:
                 min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
             with r5c2:
                 max_uses = st.number_input("최대 사용 횟수", min_value=0, step=1, value=0)
 
-            r6c1, r6c2 = st.columns(2)
+            r6c1, r6c2 = st.columns(2, gap="large")
             with r6c1:
                 min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
             with r6c2:
@@ -955,6 +968,8 @@ with tab_promo:
                 st.success("CSV를 불러왔습니다.")
             except Exception as exc:
                 st.error(f"CSV 파싱 실패: {exc}")
+
+        st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
         edited_promos = st.data_editor(
             promo_rows(st.session_state.promos),
