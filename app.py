@@ -464,6 +464,7 @@ def inject_ui_theme() -> None:
         [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:first-child {
             flex: 1 1 auto !important;
             padding-right: 52px !important;
+            padding-bottom: clamp(0.6rem, 2vw, 1rem) !important;
         }
         [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:last-child {
             position: absolute !important;
@@ -516,6 +517,7 @@ def inject_ui_theme() -> None:
             display: flex;
             flex-wrap: wrap;
             gap: 0.46rem;
+            margin-bottom: 0.2rem;
         }
 
         .meta-badge {
