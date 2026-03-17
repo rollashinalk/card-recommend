@@ -540,6 +540,34 @@ def inject_ui_theme() -> None:
             height: 1rem;
         }
 
+        .fx-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.35rem;
+            margin-bottom: 0.1rem;
+        }
+
+        .st-key-fx_refresh_small button {
+            min-height: 32px !important;
+            padding: 0.1rem 0.45rem !important;
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            line-height: 1 !important;
+            border-radius: 10px !important;
+            background: transparent !important;
+            color: var(--deep-navy) !important;
+            border: 1px solid #D8E0EF !important;
+            box-shadow: none !important;
+        }
+
+        .st-key-fx_refresh_small button:hover {
+            background: rgba(0, 82, 255, 0.08) !important;
+            color: var(--nova-blue) !important;
+            border-color: #BFD1FF !important;
+            transform: none !important;
+        }
+
         div[data-testid="stForm"],
         div[data-testid="stDataEditor"],
         div[data-testid="stFileUploader"] {
@@ -588,13 +616,13 @@ def inject_ui_theme() -> None:
                 flex: 1 1 100% !important;
             }
 
-            .fx-header-row [data-testid="stHorizontalBlock"] {
+            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) {
                 flex-direction: row !important;
-                align-items: flex-end;
-                gap: 0.5rem;
+                align-items: center !important;
+                gap: 0.35rem !important;
             }
 
-            .fx-header-row [data-testid="column"] {
+            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"] {
                 width: auto !important;
                 flex: 1 1 0 !important;
             }
@@ -693,13 +721,12 @@ tab_reco, tab_promo = st.tabs(["💳 카드 추천", "🏪 행사 관리"])
 
 with tab_reco:
     with st.container():
-        st.markdown("<div class='fx-header-row'>", unsafe_allow_html=True)
-        h_col1, h_col2 = st.columns([1.5, 1], gap="small")
-        with h_col1:
-            st.markdown("<p style='margin: 10px 0 0 5px; font-weight: 800; font-size: 1.1rem;'>💱 실시간 환율</p>", unsafe_allow_html=True)
-        with h_col2:
-            refresh = st.button("새로고침", use_container_width=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div class='fx-header'></div>", unsafe_allow_html=True)
+        c1, c2 = st.columns([5, 1], gap="small")
+        with c1:
+            st.markdown("<p style='font-weight: 800; font-size: 1rem; margin: 0;'>💱 실시간 환율</p>", unsafe_allow_html=True)
+        with c2:
+            refresh = st.button("🔄", key="fx_refresh_small", use_container_width=True)
 
         if refresh or "fx_rates" not in st.session_state:
             st.session_state.fx_rates = get_fx_rates()
@@ -711,8 +738,8 @@ with tab_reco:
             updated_text = st.session_state.fx_updated_at.strftime("%H:%M") if st.session_state.fx_updated_at else "-"
             st.markdown(
                 f"""
-                <div style='background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 0.7rem 1rem; margin-top: 0.4rem; box-shadow: var(--card-shadow);'>
-                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 0.95rem; line-height: 1.4;'>
+                <div style='background: white; border: 1px solid #E2E8F0; border-radius: 12px; padding: 0.5rem 0.8rem; margin-top: 4px; box-shadow: var(--card-shadow);'>
+                    <div style='color: var(--nova-blue); font-weight: 700; font-size: 0.9rem; line-height: 1.3;'>
                         <div>1 USD = {fx_rates['JPY']:,.2f} JPY</div>
                         <div>100 JPY = {jpy_to_krw:,.2f} KRW</div>
                     </div>
