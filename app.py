@@ -611,30 +611,6 @@ def inject_ui_theme() -> None:
                 white-space: normal;
             }
 
-            [data-testid="stHorizontalBlock"] {
-                flex-direction: column;
-                gap: 0.8rem;
-            }
-
-            [data-testid="column"] {
-                width: 100% !important;
-                flex: 1 1 100% !important;
-            }
-
-            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) {
-                flex-direction: row !important;
-                align-items: center !important;
-                gap: 0.3rem !important;
-            }
-
-            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"] {
-                width: auto !important;
-                flex: 1 1 0 !important;
-            }
-
-            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"]:last-child {
-                flex: 0 0 auto !important;
-            }
 
         }
         </style>
@@ -750,7 +726,7 @@ with tab_reco:
                         <div>1 USD = {fx_rates['JPY']:,.2f} JPY</div>
                         <div>100 JPY = {jpy_to_krw:,.2f} KRW</div>
                     </div>
-                    <p style='color: #94a3b8; font-size: 0.75rem; margin: 2px 0 6px 0;'>업데이트: {updated_text}</p>
+                    <p style='color: #94a3b8; font-size: 0.75rem; margin: 5px 0 5px 0;'>업데이트: {updated_text}</p>
                     """,
                     unsafe_allow_html=True,
                 )
