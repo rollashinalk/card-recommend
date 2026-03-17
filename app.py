@@ -720,7 +720,7 @@ with tab_reco:
         fx_rates = st.session_state.fx_rates
 
         st.markdown("<p style='font-weight: 800; font-size: 0.95rem; color: #475569; margin: 0 0 0 5px;'>💱 실시간 환율</p>", unsafe_allow_html=True)
-        fx_col1, fx_col2 = st.columns([0.85, 0.15], gap="small")
+        fx_col1, fx_col2, fx_col3 = st.columns([0.80, 0.13, 0.07], gap="small")
 
         with fx_col1:
             if fx_rates:
