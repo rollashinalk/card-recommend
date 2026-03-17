@@ -553,11 +553,11 @@ def inject_ui_theme() -> None:
             flex-wrap: nowrap !important;
         }
 
-        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"]:first-child {
+        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="stColumn"]:first-child {
             flex: 1 1 auto !important;
         }
 
-        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"]:has(.st-key-fx_refresh_small) {
+        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="stColumn"]:has(.st-key-fx_refresh_small) {
             flex: 0 0 auto !important;
             width: auto !important;
             display: flex;
