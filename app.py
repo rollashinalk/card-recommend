@@ -436,6 +436,7 @@ def inject_ui_theme() -> None:
             margin: 0.78rem 0;
             box-shadow: var(--card-shadow);
             transition: transform 0.22s ease, box-shadow 0.22s ease;
+            cursor: pointer;
         }
 
         .rank-card:hover {
@@ -447,6 +448,23 @@ def inject_ui_theme() -> None:
         .rank-card-2 { background: rgba(124, 58, 237, 0.05) !important; border: 1px solid #DDD6FE !important; }
         .rank-card-3 { background: rgba(16, 185, 129, 0.05) !important; border: 1px solid #D1FAE5 !important; }
         .rank-card-plain { background: #ffffff !important; border: 1px solid #E2E8F0 !important; }
+
+        .rank-card-selected {
+            border: 2.5px solid #0052FF !important;
+            box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15), var(--card-shadow-hover) !important;
+        }
+
+        .rank-card-selected-badge {
+            display: inline-block;
+            background: #0052FF;
+            color: #ffffff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 99px;
+            float: right;
+            margin-top: -2px;
+        }
 
         .rank-title {
             font-size: clamp(1rem, 2.4vw, 1.2rem);
@@ -829,13 +847,18 @@ with tab_reco:
         st.subheader("🔍 결제 카드 선택")
 
         for i, opt in enumerate(data["options"], start=1):
+            idx = i - 1
+            is_selected = (idx == st.session_state.selected_option_idx)
             with st.container():
                 medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
                 rank_cls = f"rank-card rank-card-{i}" if i <= 3 else "rank-card rank-card-plain"
+                if is_selected:
+                    rank_cls += " rank-card-selected"
+                badge_html = "<span class='rank-card-selected-badge'>✓ 선택됨</span>" if is_selected else ""
                 st.markdown(
                     (
                         f"<div class='{rank_cls.strip()}'>"
-                        f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}</div>"
+                        f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}{badge_html}</div>"
                         f"<div class='rank-benefit'>{format_money(opt['reward_native'], opt['reward_currency'])} 혜택</div>"
                         f"<div class='compact-meta'>"
                         f"<span class='meta-badge'>🚩 {opt['remaining_uses']}회 남음</span>"
@@ -847,17 +870,10 @@ with tab_reco:
                     ),
                     unsafe_allow_html=True,
                 )
-
-        labels = [
-            f"{i+1}위 · {o['card_name']} · {format_money(o['reward_native'], o['reward_currency'])}"
-            for i, o in enumerate(data["options"])
-        ]
-        st.radio(
-            "✔️ 실제 결제할 카드 선택",
-            options=list(range(len(labels))),
-            format_func=lambda idx: labels[idx],
-            key="selected_option_idx",
-        )
+                if not is_selected:
+                    if st.button("이 카드로 선택", key=f"select_card_{i}", use_container_width=True):
+                        st.session_state.selected_option_idx = idx
+                        st.rerun()
 
         col_done, col_cancel = st.columns(2)
         with col_done:
