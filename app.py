@@ -438,6 +438,7 @@ def inject_ui_theme() -> None:
             align-items: flex-start;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
+            overflow: hidden !important;
             transition: transform 0.22s ease, box-shadow 0.22s ease;
         }
 
@@ -463,13 +464,14 @@ def inject_ui_theme() -> None:
             flex: 1 1 auto !important;
         }
         [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:last-child {
-            flex: 0 0 auto !important;
-            width: auto !important;
+            flex: 0 0 48px !important;
+            width: 48px !important;
+            min-width: 48px !important;
+            max-width: 48px !important;
             display: flex;
-            justify-content: flex-end;
-            align-items: flex-start;
-            padding-right: 0.3rem !important;
-            padding-top: 0.2rem !important;
+            justify-content: center;
+            align-items: center;
+            padding: 0 !important;
         }
 
         [class*="st-key-card_select_"] button {
@@ -887,7 +889,7 @@ with tab_reco:
                     unsafe_allow_html=True,
                 )
             with col_btn:
-                btn_label = "✓" if is_selected else "○"
+                btn_label = "✓"
                 if st.button(btn_label, key=f"card_select_{idx}", use_container_width=False):
                     st.session_state.selected_option_idx = idx
                     st.rerun()
