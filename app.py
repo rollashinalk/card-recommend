@@ -428,30 +428,61 @@ def inject_ui_theme() -> None:
             font-size: clamp(1.25rem, 3.2vw, 1.8rem) !important;
         }
 
-        .rank-card {
-            background: #ffffff;
-            border: 1px solid #E2E8F0 !important;
+        /* Rank card container — horizontal block styled as card */
+        [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) {
+            border: 1px solid #E2E8F0;
             border-radius: var(--radius-card);
             padding: clamp(1.05rem, 2.8vw, 1.45rem);
             margin: 0.78rem 0;
             box-shadow: var(--card-shadow);
+            align-items: flex-start;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
             transition: transform 0.22s ease, box-shadow 0.22s ease;
-            cursor: pointer;
         }
 
-        .rank-card:hover {
+        [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]):hover {
             transform: translateY(-3px);
             box-shadow: var(--card-shadow-hover);
         }
 
-        .rank-card-1 { background: rgba(0, 82, 255, 0.05) !important; border: 1.5px solid var(--nova-blue) !important; }
-        .rank-card-2 { background: rgba(124, 58, 237, 0.05) !important; border: 1px solid #DDD6FE !important; }
-        .rank-card-3 { background: rgba(16, 185, 129, 0.05) !important; border: 1px solid #D1FAE5 !important; }
-        .rank-card-plain { background: #ffffff !important; border: 1px solid #E2E8F0 !important; }
+        [data-testid="stHorizontalBlock"]:has(.st-key-card_select_0) {
+            background: rgba(0, 82, 255, 0.05) !important;
+            border: 1.5px solid var(--nova-blue) !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(.st-key-card_select_1) {
+            background: rgba(124, 58, 237, 0.05) !important;
+            border: 1px solid #DDD6FE !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(.st-key-card_select_2) {
+            background: rgba(16, 185, 129, 0.05) !important;
+            border: 1px solid #D1FAE5 !important;
+        }
 
-        .rank-card-selected {
-            border: 2.5px solid #0052FF !important;
-            box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15), var(--card-shadow-hover) !important;
+        [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:first-child {
+            flex: 1 1 auto !important;
+        }
+        [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]) > [data-testid="stColumn"]:last-child {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            display: flex;
+            justify-content: flex-end;
+            align-items: flex-start;
+            padding-right: 0.3rem !important;
+            padding-top: 0.2rem !important;
+        }
+
+        [class*="st-key-card_select_"] button {
+            min-height: 28px !important;
+            height: 28px !important;
+            padding: 0 10px !important;
+            font-size: 0.78rem !important;
+            font-weight: 600 !important;
+            border-radius: 99px !important;
+            border: 1.5px solid #CBD5E1 !important;
+            background: transparent !important;
+            color: #64748B !important;
+            box-shadow: none !important;
         }
 
         .rank-card-selected-badge {
@@ -849,15 +880,12 @@ with tab_reco:
         for i, opt in enumerate(data["options"], start=1):
             idx = i - 1
             is_selected = (idx == st.session_state.selected_option_idx)
-            with st.container():
-                medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
-                rank_cls = f"rank-card rank-card-{i}" if i <= 3 else "rank-card rank-card-plain"
-                if is_selected:
-                    rank_cls += " rank-card-selected"
-                badge_html = "<span class='rank-card-selected-badge'>✓ 선택됨</span>" if is_selected else ""
+            medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else ""
+            badge_html = "<span class='rank-card-selected-badge'>✓ 선택됨</span>" if is_selected else ""
+            col_info, col_btn = st.columns([10, 1.2], gap="small")
+            with col_info:
                 st.markdown(
                     (
-                        f"<div class='{rank_cls.strip()}'>"
                         f"<div class='rank-title'><span>{medal}</span> {i}위 · {opt['card_name']}{badge_html}</div>"
                         f"<div class='rank-benefit'>{format_money(opt['reward_native'], opt['reward_currency'])} 혜택</div>"
                         f"<div class='compact-meta'>"
@@ -866,14 +894,29 @@ with tab_reco:
                         f"<span class='meta-badge'>💰 총한도 {opt['total_remain_text']}</span>"
                         f"<span class='meta-badge'>📅 월한도 {opt['monthly_remain_text']}</span>"
                         f"</div>"
-                        f"</div>"
                     ),
                     unsafe_allow_html=True,
                 )
-                if not is_selected:
-                    if st.button("이 카드로 선택", key=f"select_card_{i}", use_container_width=True):
-                        st.session_state.selected_option_idx = idx
-                        st.rerun()
+            with col_btn:
+                btn_label = "✓" if is_selected else "선택"
+                if st.button(btn_label, key=f"card_select_{idx}", use_container_width=False):
+                    st.session_state.selected_option_idx = idx
+                    st.rerun()
+
+        selected_idx = st.session_state.selected_option_idx
+        st.markdown(f"""
+<style>
+[data-testid="stHorizontalBlock"]:has(.st-key-card_select_{selected_idx}) {{
+    border: 2.5px solid #0052FF !important;
+    box-shadow: 0 0 0 3px rgba(0, 82, 255, 0.15), var(--card-shadow-hover) !important;
+}}
+.st-key-card_select_{selected_idx} button {{
+    background: #0052FF !important;
+    color: #ffffff !important;
+    border-color: #0052FF !important;
+}}
+</style>
+""", unsafe_allow_html=True)
 
         col_done, col_cancel = st.columns(2)
         with col_done:
