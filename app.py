@@ -557,16 +557,13 @@ def inject_ui_theme() -> None:
             flex: 1 1 auto !important;
         }
 
-        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"]:last-child {
+        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) > [data-testid="column"]:has(.st-key-fx_refresh_small) {
             flex: 0 0 auto !important;
             width: auto !important;
             display: flex;
             justify-content: flex-end;
             align-items: center;
-        }
-
-        .st-key-fx_refresh_small {
-            margin-right: 0.5rem !important;
+            padding-right: 0.75rem !important;
         }
 
         .st-key-fx_refresh_small button {
@@ -720,7 +717,7 @@ with tab_reco:
         fx_rates = st.session_state.fx_rates
 
         st.markdown("<p style='font-weight: 800; font-size: 0.95rem; color: #475569; margin: 0 0 0 5px;'>💱 실시간 환율</p>", unsafe_allow_html=True)
-        fx_col1, fx_col2, fx_col3 = st.columns([0.80, 0.13, 0.07], gap="small")
+        fx_col1, fx_col2 = st.columns([0.85, 0.15], gap="small")
 
         with fx_col1:
             if fx_rates:
