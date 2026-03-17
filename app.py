@@ -566,6 +566,10 @@ def inject_ui_theme() -> None:
             padding-right: 0.75rem !important;
         }
 
+        .st-key-fx_refresh_small {
+            transform: translateX(-12px) !important;
+        }
+
         .st-key-fx_refresh_small button {
             min-height: 36px !important;
             width: 36px !important;
