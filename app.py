@@ -540,16 +540,15 @@ def inject_ui_theme() -> None:
             height: 1rem;
         }
 
-        .fx-card-wrapper {
+        [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) {
             background: white;
             border: 1px solid #E2E8F0;
             border-radius: 16px;
             padding: 0.7rem 1rem;
             box-shadow: var(--card-shadow);
-            display: flex;
             align-items: center;
-            justify-content: space-between;
             margin-top: 0.3rem;
+            gap: 0.3rem;
         }
 
         .st-key-fx_refresh_small button {
@@ -608,6 +607,10 @@ def inject_ui_theme() -> None:
             [data-testid="column"] {
                 width: 100% !important;
                 flex: 1 1 100% !important;
+            }
+
+            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) {
+                flex-direction: row !important;
             }
 
         }
@@ -712,18 +715,19 @@ with tab_reco:
         fx_rates = st.session_state.fx_rates
 
         st.markdown("<p style='font-weight: 800; font-size: 0.95rem; color: #475569; margin: 0 0 0 5px;'>💱 실시간 환율</p>", unsafe_allow_html=True)
-        st.markdown("<div class='fx-card-wrapper'>", unsafe_allow_html=True)
         fx_col1, fx_col2 = st.columns([0.85, 0.15], gap="small")
 
         with fx_col1:
             if fx_rates:
                 jpy_to_krw = (fx_rates['KRW'] / fx_rates['JPY']) * 100
+                updated_text = st.session_state.fx_updated_at.strftime("%H:%M") if st.session_state.fx_updated_at else "-"
                 st.markdown(
                     f"""
                     <div style='color: var(--nova-blue); font-weight: 750; font-size: 0.95rem; line-height: 1.4; margin-top: 5px;'>
                         <div>1 USD = {fx_rates['JPY']:,.2f} JPY</div>
                         <div>100 JPY = {jpy_to_krw:,.2f} KRW</div>
                     </div>
+                    <p style='color: #94a3b8; font-size: 0.75rem; margin: 2px 0 0 0;'>업데이트: {updated_text}</p>
                     """,
                     unsafe_allow_html=True,
                 )
@@ -731,17 +735,12 @@ with tab_reco:
         with fx_col2:
             refresh = st.button("🔄", key="fx_refresh_small", use_container_width=False)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
         if refresh:
             st.session_state.fx_rates = get_fx_rates()
             st.session_state.fx_updated_at = dt.datetime.now(tz=KST) if st.session_state.fx_rates else None
             fx_rates = st.session_state.fx_rates
 
-        if fx_rates:
-            updated_text = st.session_state.fx_updated_at.strftime("%H:%M") if st.session_state.fx_updated_at else "-"
-            st.markdown(f"<p style='color: #94a3b8; font-size: 0.75rem; margin: -5px 0 0 5px;'>업데이트: {updated_text}</p>", unsafe_allow_html=True)
-        else:
+        if not fx_rates:
             st.error("환율 조회 실패. 잠시 후 다시 시도해 주세요.")
 
     st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
