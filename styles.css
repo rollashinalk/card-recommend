@@ -53,6 +53,7 @@ body {
 
 .hero-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  text-align: center;
 }
 
 .eyebrow {
