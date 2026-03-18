@@ -736,9 +736,9 @@ def load_promos_from_csv(uploaded_file) -> List[CardPromo]:
 inject_ui_theme()
 st.markdown(
     """
-    <div class="hero-banner">
-      <p class="eyebrow">💳 Card Optimizer</p>
-      <h1>일본 결제 카드 추천</h1>
+    <div class="hero-banner" style="text-align:center;">
+      <p class="eyebrow" style="text-align:center;width:100%;display:block;">💳 Card Optimizer</p>
+      <h1 style="text-align:center;width:100%;display:block;">일본 결제 카드 추천</h1>
     </div>
     """,
     unsafe_allow_html=True,
