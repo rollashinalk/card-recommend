@@ -1018,13 +1018,13 @@ with tab_promo:
         st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
         with st.form("promo_add_form", clear_on_submit=True):
-            r1c1, r1c2 = st.columns(2, gap="large")
+            r1c1, r1c2 = st.columns(2, gap="small")
             with r1c1:
                 card_name = st.text_input("대상 카드", placeholder="예: KB UPI (가온 체크)")
             with r1c2:
                 percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
 
-            r2c1, r2c2 = st.columns(2, gap="large")
+            r2c1, r2c2 = st.columns(2, gap="small")
             with r2c1:
                 reward_type = st.selectbox(
                     "혜택 유형",
@@ -1033,25 +1033,25 @@ with tab_promo:
             with r2c2:
                 fixed_amount = st.number_input("정액 혜택", min_value=0.0, step=100.0, value=0.0)
 
-            r3c1, r3c2 = st.columns(2, gap="large")
+            r3c1, r3c2 = st.columns(2, gap="small")
             with r3c1:
                 start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
             with r3c2:
                 max_reward_per_txn = st.number_input("건당 최대 혜택", min_value=0.0, step=100.0, value=0.0)
 
-            r4c1, r4c2 = st.columns(2, gap="large")
+            r4c1, r4c2 = st.columns(2, gap="small")
             with r4c1:
                 end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
             with r4c2:
                 max_reward_cur = st.selectbox("건당 최대 혜택 통화", SUPPORTED_CURRENCIES, index=0)
 
-            r5c1, r5c2 = st.columns(2, gap="large")
+            r5c1, r5c2 = st.columns(2, gap="small")
             with r5c1:
                 min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
             with r5c2:
                 max_uses = st.number_input("최대 사용 횟수", min_value=0, step=1, value=0)
 
-            r6c1, r6c2 = st.columns(2, gap="large")
+            r6c1, r6c2 = st.columns(2, gap="small")
             with r6c1:
                 min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
             with r6c2:
