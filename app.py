@@ -404,7 +404,8 @@ def inject_ui_theme() -> None:
         }
 
         .hero-banner .eyebrow {
-            margin: 0;
+            margin: 0 !important;
+            padding: 0 !important;
             font-size: clamp(0.75rem, 1.4vw, 0.92rem);
             font-weight: 700;
             letter-spacing: 0.06em;
@@ -418,7 +419,8 @@ def inject_ui_theme() -> None:
             letter-spacing: -0.05em !important;
             line-height: 1.03 !important;
             color: var(--deep-navy) !important;
-            margin: 0.2rem 0 0 !important;
+            margin: 0.1rem 0 0 !important;
+            padding: 0 !important;
         }
 
         [data-testid="stHeadingWithActionElements"] h2,
