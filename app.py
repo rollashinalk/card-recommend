@@ -1017,88 +1017,6 @@ with tab_promo:
 
         st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
 
-        with st.form("promo_add_form", clear_on_submit=True):
-            r1c1, r1c2 = st.columns(2, gap="small")
-            with r1c1:
-                card_name = st.text_input("대상 카드", placeholder="예: KB UPI (가온 체크)")
-            with r1c2:
-                percent_value = st.number_input("할인율(%)", min_value=0.0, max_value=100.0, step=0.1, value=0.0)
-
-            r2c1, r2c2 = st.columns(2, gap="small")
-            with r2c1:
-                reward_type = st.selectbox(
-                    "혜택 유형",
-                    ["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"],
-                )
-            with r2c2:
-                fixed_amount = st.number_input("정액 혜택", min_value=0.0, step=100.0, value=0.0)
-
-            r3c1, r3c2 = st.columns(2, gap="small")
-            with r3c1:
-                start_date = st.date_input("시작일", value=dt.date.today(), key="promo_start_date")
-            with r3c2:
-                max_reward_per_txn = st.number_input("건당 최대 혜택", min_value=0.0, step=100.0, value=0.0)
-
-            r4c1, r4c2 = st.columns(2, gap="small")
-            with r4c1:
-                end_date = st.date_input("종료일", value=dt.date.today(), key="promo_end_date")
-            with r4c2:
-                max_reward_cur = st.selectbox("건당 최대 혜택 통화", SUPPORTED_CURRENCIES, index=0)
-
-            r5c1, r5c2 = st.columns(2, gap="small")
-            with r5c1:
-                min_amount = st.number_input("최소 결제 금액", min_value=0.0, step=1000.0, value=0.0)
-            with r5c2:
-                max_uses = st.number_input("최대 사용 횟수", min_value=0, step=1, value=0)
-
-            r6c1, r6c2 = st.columns(2, gap="small")
-            with r6c1:
-                min_currency = st.selectbox("최소 금액 통화", SUPPORTED_CURRENCIES, index=0)
-            with r6c2:
-                merchant_type = st.selectbox("가맹점 유형", ["all", "kb_cvs3"])
-
-            submitted = st.form_submit_button("행사 추가", type="primary", use_container_width=True)
-
-            if submitted:
-                if not card_name.strip():
-                    st.warning("대상 카드명을 입력해 주세요.")
-                else:
-                    new_promo = CardPromo(
-                        card_name=card_name.strip(),
-                        enabled=True,
-                        reward_type=reward_type,
-                        start_date=start_date,
-                        end_date=end_date,
-                        min_amount=float(min_amount),
-                        min_currency=min_currency,
-                        percent_value=float(percent_value),
-                        fixed_amount=float(fixed_amount),
-                        max_reward_per_txn=float(max_reward_per_txn),
-                        max_reward_per_txn_currency=max_reward_cur,
-                        max_uses=int(max_uses),
-                        used_count=0,
-                        total_cap_amount=0.0,
-                        total_cap_currency="JPY",
-                        total_used_amount=0.0,
-                        monthly_spend_cap_amount=0.0,
-                        monthly_spend_cap_currency="KRW",
-                        monthly_spend_used_amount=0.0,
-                        monthly_reward_cap_amount=0.0,
-                        monthly_reward_cap_currency="KRW",
-                        monthly_reward_used_amount=0.0,
-                        merchant_type=merchant_type,
-                        formula_id="shinhan_the_more_v1" if reward_type == "formula_cashback" else "",
-                        formula_params_json="",
-                    )
-                    st.session_state.promos.append(new_promo)
-                    save_app_state(st.session_state.promos, st.session_state.transactions)
-                    st.success("행사가 추가되었습니다.")
-                    st.rerun()
-
-    st.markdown("<div class='section-spacer'></div>", unsafe_allow_html=True)
-
-    with st.container():
-        st.subheader("📒 행사 리스트")
         uploaded_csv = st.file_uploader("프로모션 CSV 업로드", type=["csv"])
         if uploaded_csv is not None:
             try:
@@ -1115,13 +1033,35 @@ with tab_promo:
             num_rows="dynamic",
             use_container_width=True,
             column_config={
-                "reward_type": st.column_config.SelectboxColumn(options=["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"]),
-                "min_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-                "max_reward_per_txn_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-                "total_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-                "monthly_spend_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-                "monthly_reward_cap_currency": st.column_config.SelectboxColumn(options=SUPPORTED_CURRENCIES),
-                "merchant_type": st.column_config.SelectboxColumn(options=["all", "kb_cvs3"]),
+                "card_name": st.column_config.TextColumn(label="카드명", help="혜택이 적용되는 카드 이름"),
+                "enabled": st.column_config.CheckboxColumn(label="활성", help="행사 활성화 여부"),
+                "reward_type": st.column_config.SelectboxColumn(
+                    label="혜택 유형",
+                    help="percent_discount: 비율 할인 / fixed_cashback: 정액 캐시백 / cashback_with_cap: 한도 있는 캐시백 / formula_cashback: 공식 기반(더모아 등)",
+                    options=["percent_discount", "fixed_cashback", "cashback_with_cap", "formula_cashback"],
+                ),
+                "start_date": st.column_config.DateColumn(label="시작일", help="행사 시작일 (없으면 빈칸)"),
+                "end_date": st.column_config.DateColumn(label="종료일", help="행사 종료일 (없으면 빈칸)"),
+                "min_amount": st.column_config.NumberColumn(label="최소 결제금액", help="혜택 적용을 위한 건당 최소 결제금액"),
+                "min_currency": st.column_config.SelectboxColumn(label="최소금액 통화", help="최소 결제금액의 통화", options=SUPPORTED_CURRENCIES),
+                "percent_value": st.column_config.NumberColumn(label="할인율(%)", help="비율 할인 시 적용 퍼센트 (예: 15 → 15%)"),
+                "fixed_amount": st.column_config.NumberColumn(label="정액 혜택", help="건당 고정 캐시백 금액"),
+                "max_reward_per_txn": st.column_config.NumberColumn(label="건당 최대 혜택", help="한 건당 받을 수 있는 최대 혜택 금액 (0 = 제한 없음)"),
+                "max_reward_per_txn_currency": st.column_config.SelectboxColumn(label="건당 최대 통화", help="건당 최대 혜택의 통화", options=SUPPORTED_CURRENCIES),
+                "max_uses": st.column_config.NumberColumn(label="최대 사용 횟수", help="행사 기간 내 총 사용 가능 횟수 (0 = 제한 없음)"),
+                "used_count": st.column_config.NumberColumn(label="사용 횟수", help="현재까지 사용된 횟수 (자동 집계)"),
+                "total_cap_amount": st.column_config.NumberColumn(label="총 혜택 한도", help="행사 전체 혜택 지급 한도 (0 = 제한 없음)"),
+                "total_cap_currency": st.column_config.SelectboxColumn(label="총 한도 통화", options=SUPPORTED_CURRENCIES),
+                "total_used_amount": st.column_config.NumberColumn(label="총 혜택 사용액", help="현재까지 지급된 총 혜택 금액 (자동 집계)"),
+                "monthly_spend_cap_amount": st.column_config.NumberColumn(label="월 결제 한도", help="혜택 적용 기준 월 최대 결제금액 (0 = 제한 없음)"),
+                "monthly_spend_cap_currency": st.column_config.SelectboxColumn(label="월 결제 한도 통화", options=SUPPORTED_CURRENCIES),
+                "monthly_spend_used_amount": st.column_config.NumberColumn(label="월 결제 사용액", help="이번 달 누적 결제금액 (자동 집계)"),
+                "monthly_reward_cap_amount": st.column_config.NumberColumn(label="월 혜택 한도", help="이번 달 받을 수 있는 최대 혜택 금액 (0 = 제한 없음)"),
+                "monthly_reward_cap_currency": st.column_config.SelectboxColumn(label="월 혜택 한도 통화", options=SUPPORTED_CURRENCIES),
+                "monthly_reward_used_amount": st.column_config.NumberColumn(label="월 혜택 사용액", help="이번 달 누적 지급 혜택 금액 (자동 집계)"),
+                "merchant_type": st.column_config.SelectboxColumn(label="가맹점 유형", help="all: 전체 / kb_cvs3: KB 일본 편의점 한정", options=["all", "kb_cvs3"]),
+                "formula_id": st.column_config.TextColumn(label="공식 ID", help="formula_cashback 전용. 예: shinhan_the_more_v1"),
+                "formula_params_json": st.column_config.TextColumn(label="공식 파라미터", help="공식에 전달할 JSON 파라미터 (일반적으로 빈칸)"),
             },
         )
         st.session_state.promos = rows_to_promos(edited_promos)
