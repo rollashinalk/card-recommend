@@ -666,8 +666,12 @@ def inject_ui_theme() -> None:
             .meta-badge {
                 white-space: normal;
             }
+        }
 
-
+        /* 사이드바 토글 버튼 제거 — 이 앱에는 사이드바가 없으며,
+           모바일에서 버튼 공간이 왼쪽에만 추가되어 레이아웃이 오른쪽으로 밀리는 원인 */
+        [data-testid="collapsedControl"] {
+            display: none !important;
         }
         </style>
         """,
