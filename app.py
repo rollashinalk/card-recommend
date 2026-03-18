@@ -397,10 +397,10 @@ def inject_ui_theme() -> None:
         .hero-banner {
             background: #ffffff;
             border-radius: var(--radius-card);
-            padding: clamp(0.7rem, 2vw, 1.2rem) clamp(1.1rem, 2.8vw, 2rem);
+            padding: clamp(1.2rem, 2.8vw, 1.8rem) clamp(1.1rem, 2.8vw, 2rem);
             margin-bottom: clamp(1.1rem, 2.6vw, 2rem);
             box-shadow: var(--card-shadow);
-            text-align: center;
+            text-align: center !important;
         }
 
         .hero-banner .eyebrow {
@@ -411,6 +411,8 @@ def inject_ui_theme() -> None:
             letter-spacing: 0.06em;
             text-transform: uppercase;
             color: var(--nova-blue);
+            text-align: center !important;
+            width: 100% !important;
         }
 
         .hero-banner h1 {
@@ -420,6 +422,8 @@ def inject_ui_theme() -> None:
             line-height: 1.03 !important;
             color: var(--deep-navy) !important;
             margin: 0.1rem 0 0 !important;
+            text-align: center !important;
+            width: 100% !important;
             padding: 0 !important;
         }
 
