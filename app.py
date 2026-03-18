@@ -400,7 +400,12 @@ def inject_ui_theme() -> None:
             padding: clamp(1.2rem, 2.8vw, 1.8rem) clamp(1.1rem, 2.8vw, 2rem);
             margin-bottom: clamp(1.1rem, 2.6vw, 2rem);
             box-shadow: var(--card-shadow);
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
             text-align: center !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
         }
 
         .hero-banner .eyebrow {
@@ -412,7 +417,6 @@ def inject_ui_theme() -> None:
             text-transform: uppercase;
             color: var(--nova-blue);
             text-align: center !important;
-            width: 100% !important;
         }
 
         .hero-banner h1 {
@@ -423,8 +427,15 @@ def inject_ui_theme() -> None:
             color: var(--deep-navy) !important;
             margin: 0.1rem 0 0 !important;
             text-align: center !important;
-            width: 100% !important;
             padding: 0 !important;
+        }
+
+        /* hero-banner를 감싸는 Streamlit 컨테이너가 flex child 역할을 제대로 하도록 */
+        [data-testid="stMarkdownContainer"]:has(.hero-banner) {
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
         }
 
         [data-testid="stHeadingWithActionElements"] h2,
