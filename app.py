@@ -397,7 +397,7 @@ def inject_ui_theme() -> None:
         .hero-banner {
             background: #ffffff;
             border-radius: var(--radius-card);
-            padding: clamp(1.1rem, 2.8vw, 2rem);
+            padding: clamp(0.7rem, 2vw, 1.2rem) clamp(1.1rem, 2.8vw, 2rem);
             margin-bottom: clamp(1.1rem, 2.6vw, 2rem);
             box-shadow: var(--card-shadow);
             text-align: center;
@@ -418,7 +418,7 @@ def inject_ui_theme() -> None:
             letter-spacing: -0.05em !important;
             line-height: 1.03 !important;
             color: var(--deep-navy) !important;
-            margin: clamp(0.45rem, 1.6vw, 0.75rem) 0 0 !important;
+            margin: 0.2rem 0 0 !important;
         }
 
         [data-testid="stHeadingWithActionElements"] h2,
