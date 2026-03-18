@@ -419,7 +419,7 @@ def inject_ui_theme() -> None:
             text-align: center !important;
         }
 
-        .hero-banner h1 {
+        .hero-banner .hero-title {
             font-size: clamp(1.7rem, 6vw, 3.1rem) !important;
             font-weight: 850 !important;
             letter-spacing: -0.05em !important;
@@ -737,8 +737,8 @@ inject_ui_theme()
 st.markdown(
     """
     <div class="hero-banner" style="text-align:center;">
-      <p class="eyebrow" style="text-align:center;width:100%;display:block;">💳 Card Optimizer</p>
-      <h1 style="text-align:center;width:100%;display:block;">일본 결제 카드 추천</h1>
+      <p class="eyebrow" style="text-align:center;">💳 Card Optimizer</p>
+      <div class="hero-title" style="text-align:center;">일본 결제 카드 추천</div>
     </div>
     """,
     unsafe_allow_html=True,
