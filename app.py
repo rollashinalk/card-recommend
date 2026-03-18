@@ -384,6 +384,11 @@ def inject_ui_theme() -> None:
             font-family: 'Pretendard', sans-serif !important;
         }
 
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+        }
+
         html, body, [data-testid="stAppViewContainer"], .stApp {
             background: var(--off-white) !important;
             color: var(--deep-navy) !important;
@@ -670,6 +675,8 @@ def inject_ui_theme() -> None:
         @media screen and (max-width: 768px) {
             .main .block-container {
                 padding: 1rem;
+                max-width: 100vw !important;
+                box-sizing: border-box !important;
             }
 
             .hero-banner {
@@ -682,6 +689,19 @@ def inject_ui_theme() -> None:
 
             .meta-badge {
                 white-space: normal;
+            }
+
+            /* 모바일에서 flex-nowrap 컨테이너가 viewport를 초과하지 않도록 */
+            [data-testid="stHorizontalBlock"]:has([class*="st-key-card_select_"]),
+            [data-testid="stHorizontalBlock"]:has(.st-key-fx_refresh_small) {
+                max-width: 100% !important;
+                overflow: hidden !important;
+            }
+
+            /* 데이터 에디터(표)가 가로로 넘치지 않도록 */
+            div[data-testid="stDataEditor"] {
+                max-width: 100% !important;
+                overflow-x: auto !important;
             }
         }
 
